@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bicycles Zone - نظام إدارة المحل والمخزن</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #0f0f11; color: #f3f4f6; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-black border-b border-gray-800 shadow-2xl no-print">
+        <div class="container mx-auto px-6 py-5 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black text-2xl font-black shadow-lg">
+                    <i class="fa-solid fa-bicycle"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black tracking-wider text-white">BICYCLES ZONE</h1>
+                    <p class="text-xs text-gray-400 font-bold">مكانك المناسب لكل دراجة بتحلم بيها</p>
+                    <p class="text-xs text-gray-400 mt-0.5"><i class="fa-solid fa-location-dot text-white ml-1"></i>منشاة القناطر - الجيزة | <i class="fa-solid fa-phone text-white ml-1"></i>01067097867</p>
+                </div>
+            </div>
+            
+            <nav class="flex flex-wrap gap-2 mt-4 lg:mt-0">
+                <button onclick="switchTab('inventory')" id="tab-inventory" class="px-5 py-2.5 rounded-xl bg-white text-black font-extrabold hover:bg-gray-200 transition shadow"><i class="fa-solid fa-boxes-stacked ml-2"></i>المخزن</button>
+                <button onclick="switchTab('pos')" id="tab-pos" class="px-5 py-2.5 rounded-xl bg-gray-900 text-gray-300 font-bold hover:bg-gray-800 border border-gray-800 transition"><i class="fa-solid fa-cart-shopping ml-2"></i>نقطة البيع</button>
+                <button onclick="switchTab('debts')" id="tab-debts" class="px-5 py-2.5 rounded-xl bg-gray-900 text-gray-300 font-bold hover:bg-gray-800 border border-gray-800 transition"><i class="fa-solid fa-hand-holding-dollar ml-2"></i>حسابات الآجل</button>
+                <button onclick="switchTab('reports')" id="tab-reports" class="px-5 py-2.5 rounded-xl bg-gray-900 text-gray-300 font-bold hover:bg-gray-800 border border-gray-800 transition"><i class="fa-solid fa-chart-line ml-2"></i>التقارير</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container mx-auto px-4 py-8 no-print flex-grow">
+
+        <!-- TAB 1: INVENTORY (إدارة المخزن) -->
+        <section id="sec-inventory" class="space-y-6">
+            <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold text-white mb-4 border-b border-gray-800 pb-3 flex items-center">
+                    <i class="fa-solid fa-box text-white ml-2"></i>إضافة صنف جديد للمخزن
+                </h2>
+                <form id="productForm" onsubmit="saveProduct(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">نوع الصنف</label>
+                        <select id="pCategory" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white focus:ring-2 focus:ring-white">
+                            <option value="قطع غيار">قطع غيار</option>
+                            <option value="عجل">عجلة / دراجة (عليها ضمان)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">اسم الصنف / الموديل</label>
+                        <input type="text" id="pName" required placeholder="مثال: دراجة سرعات / جادون" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">اسم التاجر / المورد</label>
+                        <input type="text" id="pSupplier" required placeholder="اسم التاجر المصدر" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">الكمية بالمخزن</label>
+                        <input type="number" id="pQty" required min="1" value="1" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white focus:ring-2 focus:ring-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">السعر عليا (التكلفة الخاصة)</label>
+                        <input type="number" id="pCost" required min="0" placeholder="0.00" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">سعر البيع للزبون (قطاعي)</label>
+                        <input type="number" id="pPriceCustomer" required min="0" placeholder="0.00" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">سعر البيع للعجلاتي (جملة)</label>
+                        <input type="number" id="pPriceMechanic" required min="0" placeholder="0.00" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-white hover:bg-gray-200 text-black font-extrabold p-3 rounded-xl transition shadow-lg">
+                            <i class="fa-solid fa-plus ml-2"></i>حفظ بالمخزن
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Table Inventory -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-black text-gray-400 text-xs border-b border-gray-800">
+                                <th class="p-4">النوع</th>
+                                <th class="p-4">اسم الصنف</th>
+                                <th class="p-4">المورد/التاجر</th>
+                                <th class="p-4">الكمية</th>
+                                <th class="p-4">التكلفة (خاصة)</th>
+                                <th class="p-4">سعر الزبون</th>
+                                <th class="p-4">سعر العجلاتي</th>
+                                <th class="p-4 text-center">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTable" class="divide-y divide-gray-800 text-sm">
+                            <!-- Items loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: POS (نقطة البيع) -->
+        <section id="sec-pos" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-2 bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+                    <h2 class="text-xl font-bold text-white border-b border-gray-800 pb-3 flex items-center">
+                        <i class="fa-solid fa-cart-plus text-white ml-2"></i>تجهيز الفاتورة
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-400 mb-1">اختر الصنف من المخزن</label>
+                            <select id="posSelectProduct" onchange="checkSelectedCategory()" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white focus:ring-2 focus:ring-white">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">فئة السعر (خاص بك)</label>
+                            <select id="posPriceType" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white focus:ring-2 focus:ring-white">
+                                <option value="customer">سعر زبون (قطاعي)</option>
+                                <option value="mechanic">سعر عجلاتي (جملة)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Cost Input (Visible for bikes only) -->
+                    <div id="shippingContainer" class="hidden bg-gray-800/60 p-3 rounded-xl border border-gray-700">
+                        <label class="block text-xs font-bold text-gray-300 mb-1"><i class="fa-solid fa-truck-fast ml-1"></i>مصاريف الشحن للدراجة (اختياري)</label>
+                        <input type="number" id="posShippingCost" min="0" placeholder="0.00" value="0" class="w-full border border-gray-700 rounded-lg p-2 bg-black text-white">
+                    </div>
+
+                    <div class="flex space-x-2 space-x-reverse">
+                        <input type="number" id="posQty" value="1" min="1" class="w-28 border border-gray-700 rounded-xl p-3 bg-black text-white text-center font-bold">
+                        <button onclick="addToCart()" class="flex-grow bg-white hover:bg-gray-200 text-black font-extrabold px-6 py-3 rounded-xl transition shadow">إضافة للصنف</button>
+                    </div>
+
+                    <div class="overflow-x-auto pt-4 border-t border-gray-800">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-black text-gray-400 text-xs border-b border-gray-800">
+                                    <th class="p-3">الصنف</th>
+                                    <th class="p-3">النوع</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">الكمية</th>
+                                    <th class="p-3">الشحن</th>
+                                    <th class="p-3">الإجمالي</th>
+                                    <th class="p-3">حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartTable" class="divide-y divide-gray-800 text-sm">
+                                <!-- Cart items loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+                    <h2 class="text-xl font-bold text-white border-b border-gray-800 pb-3 flex items-center">
+                        <i class="fa-solid fa-file-invoice-dollar text-white ml-2"></i>الدفع والحفظ
+                    </h2>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">اسم المشتري / الزبون</label>
+                        <input type="text" id="custName" placeholder="أدخل الاسم" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">رقم الهاتف</label>
+                        <input type="text" id="custPhone" placeholder="01xxxxxxxxx" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600">
+                    </div>
+
+                    <div class="bg-black p-4 rounded-xl border border-gray-800 space-y-2">
+                        <div class="flex justify-between text-xl font-black text-white">
+                            <span>المبلغ الإجمالي:</span>
+                            <span id="cartTotal">0.00 ج.م</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1">طريقة السداد</label>
+                        <select id="payType" onchange="togglePayInputs()" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white font-bold">
+                            <option value="cash">كاش بالكامل</option>
+                            <option value="credit">آجل بالكامل</option>
+                            <option value="partial">دفعة كاش والباقي آجل</option>
+                        </select>
+                    </div>
+
+                    <div id="partialPayContainer" class="hidden space-y-2">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">المبلغ المدفوع كاش</label>
+                            <input type="number" id="paidAmount" min="0" oninput="calcRemaining()" placeholder="0.00" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white">
+                        </div>
+                        <div class="flex justify-between text-sm font-bold text-gray-300 bg-gray-800 p-3 rounded-xl">
+                            <span>المتبقي (آجل):</span>
+                            <span id="remainingAmount">0.00 ج.م</span>
+                        </div>
+                    </div>
+
+                    <button onclick="checkoutAndPrint()" class="w-full bg-white hover:bg-gray-200 text-black font-black py-4 rounded-xl shadow-lg transition flex justify-center items-center text-lg">
+                        <i class="fa-solid fa-print ml-2"></i>إنهاء وطباعة الفاتورة
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DEBTS (الآجل) -->
+        <section id="sec-debts" class="hidden space-y-6">
+            <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold text-white mb-4 border-b border-gray-800 pb-3 flex items-center">
+                    <i class="fa-solid fa-users text-white ml-2"></i>دفتر الديون والعملاء الآجل
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-black text-gray-400 text-xs border-b border-gray-800">
+                                <th class="p-4">اسم العميل</th>
+                                <th class="p-4">رقم الهاتف</th>
+                                <th class="p-4">إجمالي الدين</th>
+                                <th class="p-4">المبلغ المدفوع</th>
+                                <th class="p-4">المتبقي عليه</th>
+                                <th class="p-4 text-center">تحصيل دفعة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="debtsTable" class="divide-y divide-gray-800 text-sm">
+                            <!-- Debts data -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: REPORTS (التقارير) -->
+        <section id="sec-reports" class="hidden space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                    <p class="text-gray-400 text-xs font-bold">إجمالي المبيعات</p>
+                    <h3 id="repTotalSales" class="text-2xl font-black text-white mt-2">0.00 ج.م</h3>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                    <p class="text-gray-400 text-xs font-bold">الأرباح الصافية المحققة</p>
+                    <h3 id="repTotalProfit" class="text-2xl font-black text-gray-200 mt-2">0.00 ج.م</h3>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                    <p class="text-gray-400 text-xs font-bold">إجمالي الديون بالسوق (آجل)</p>
+                    <h3 id="repTotalDebts" class="text-2xl font-black text-gray-300 mt-2">0.00 ج.م</h3>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
+                    <p class="text-gray-400 text-xs font-bold">قيمة البضاعة بالمخزن (تكلفة)</p>
+                    <h3 id="repStockValue" class="text-2xl font-black text-gray-400 mt-2">0.00 ج.م</h3>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-black border-t border-gray-800 py-4 text-center text-xs text-gray-500 no-print">
+        <p>BICYCLES ZONE © جميع الحقوق محفوظة - منشاة القناطر - الجيزة</p>
+    </footer>
+
+    <!-- PRINTED INVOICE TEMPLATE (يظهر فقط في الطباعة) -->
+    <div id="printInvoice" class="print-only p-8 text-black bg-white">
+        <div class="text-center border-b-2 border-black pb-4 mb-4">
+            <h1 class="text-3xl font-black uppercase">BICYCLES ZONE</h1>
+            <p class="text-sm font-bold mt-1">مكانك المناسب لكل دراجة بتحلم بيها</p>
+            <p class="text-xs font-semibold mt-1">منشاة القناطر - الجيزة | 📱 01067097867</p>
+        </div>
+
+        <div class="flex justify-between text-sm font-bold mb-4 border-b pb-2">
+            <div>
+                <p>رقم الفاتورة: <span id="invId"></span></p>
+                <p>اسم العميل: <span id="invCustName"></span></p>
+                <p>الهاتف: <span id="invCustPhone"></span></p>
+            </div>
+            <div class="text-left">
+                <p>التاريخ: <span id="invDate"></span></p>
+                <p>طريقة الدفع: <span id="invPayType"></span></p>
+            </div>
+        </div>
+
+        <table class="w-full text-right border-collapse mb-4 text-sm">
+            <thead>
+                <tr class="border-b-2 border-black">
+                    <th class="py-2">الصنف</th>
+                    <th class="py-2">السعر</th>
+                    <th class="py-2">الكمية</th>
+                    <th class="py-2">الشحن</th>
+                    <th class="py-2">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody id="invItems" class="divide-y divide-gray-300">
+                <!-- Printed rows -->
+            </tbody>
+        </table>
+
+        <div class="border-t-2 border-black pt-2 text-sm font-bold space-y-1">
+            <div class="flex justify-between">
+                <span>الإجمالي الكلي:</span>
+                <span id="invTotal"></span>
+            </div>
+            <div class="flex justify-between">
+                <span>المدفوع:</span>
+                <span id="invPaid"></span>
+            </div>
+            <div class="flex justify-between text-gray-800">
+                <span>المتبقي (آجل):</span>
+                <span id="invRemaining"></span>
+            </div>
+        </div>
+
+        <!-- بند الضمان المختصر والمحدد للفريم فقط -->
+        <div id="invWarrantyBox" class="hidden mt-6 p-3 border-2 border-black rounded text-xs leading-relaxed">
+            <p class="font-bold text-sm mb-1">📜 بند الضمان الرسمي:</p>
+            <p>• ضمان 6 أشهر من تاريخ الشراء ضد عيوب الصناعة على الفريم فقط.</p>
+        </div>
+
+        <div class="text-center mt-8 text-xs border-t pt-4 font-bold">
+            <p>شكراً لتعاملكم مع Bicycles Zone! نتمنى لكم قيادة ممتعة وآمنة.</p>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        let inventory = JSON.parse(localStorage.getItem('bz_inventory_final')) || [];
+        let sales = JSON.parse(localStorage.getItem('bz_sales_final')) || [];
+        let debts = JSON.parse(localStorage.getItem('bz_debts_final')) || [];
+        let invoiceCounter = parseInt(localStorage.getItem('bz_invoice_counter')) || 1;
+        let cart = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderInventory();
+            populatePosDropdown();
+            renderDebts();
+            calculateReports();
+        });
+
+        function switchTab(tab) {
+            ['inventory', 'pos', 'debts', 'reports'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.replace('bg-white', 'bg-gray-900');
+                document.getElementById(`tab-${t}`).classList.replace('text-black', 'text-gray-300');
+            });
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.replace('bg-gray-900', 'bg-white');
+            document.getElementById(`tab-${tab}`).classList.replace('text-gray-300', 'text-black');
+
+            if(tab === 'pos') populatePosDropdown();
+            if(tab === 'debts') renderDebts();
+            if(tab === 'reports') calculateReports();
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const product = {
+                id: Date.now(),
+                category: document.getElementById('pCategory').value,
+                name: document.getElementById('pName').value,
+                supplier: document.getElementById('pSupplier').value,
+                qty: parseInt(document.getElementById('pQty').value),
+                cost: parseFloat(document.getElementById('pCost').value),
+                priceCustomer: parseFloat(document.getElementById('pPriceCustomer').value),
+                priceMechanic: parseFloat(document.getElementById('pPriceMechanic').value),
+            };
+
+            inventory.push(product);
+            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            document.getElementById('productForm').reset();
+            renderInventory();
+            alert('تمت إضافة الصنف بنجاح إلى مخزن Bicycles Zone!');
+        }
+
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+            inventory.forEach((p) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50">
+                        <td class="p-4 font-bold text-gray-300">${p.category}</td>
+                        <td class="p-4 font-bold text-white">${p.name}</td>
+                        <td class="p-4 text-gray-400">${p.supplier}</td>
+                        <td class="p-4 font-bold ${p.qty <= 2 ? 'text-red-400' : 'text-gray-200'}">${p.qty}</td>
+                        <td class="p-4 text-gray-400">${p.cost.toFixed(2)} ج.م</td>
+                        <td class="p-4 font-bold text-white">${p.priceCustomer.toFixed(2)} ج.م</td>
+                        <td class="p-4 text-gray-300 font-bold">${p.priceMechanic.toFixed(2)} ج.م</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteProduct(id) {
+            if(confirm('هل أنت تأكد من حذف هذا الصنف من المخزن؟')) {
+                inventory = inventory.filter(p => p.id !== id);
+                localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+                renderInventory();
+            }
+        }
+
+        function populatePosDropdown() {
+            const select = document.getElementById('posSelectProduct');
+            select.innerHTML = '<option value="">-- اختر صنفاً من المخزون --</option>';
+            inventory.forEach(p => {
+                if(p.qty > 0) {
+                    select.innerHTML += `<option value="${p.id}">[${p.category}] ${p.name} (المتاح: ${p.qty})</option>`;
+                }
+            });
+        }
+
+        function checkSelectedCategory() {
+            const prodId = parseInt(document.getElementById('posSelectProduct').value);
+            const shippingContainer = document.getElementById('shippingContainer');
+            if(prodId) {
+                const item = inventory.find(p => p.id === prodId);
+                if(item && item.category === 'عجل') {
+                    shippingContainer.classList.remove('hidden');
+                    return;
+                }
+            }
+            shippingContainer.classList.add('hidden');
+        }
+
+        function addToCart() {
+            const prodId = parseInt(document.getElementById('posSelectProduct').value);
+            const priceType = document.getElementById('posPriceType').value;
+            const qty = parseInt(document.getElementById('posQty').value);
+            const shipping = parseFloat(document.getElementById('posShippingCost').value) || 0;
+
+            if(!prodId) return alert('اختر صنفاً أولاً!');
+            const item = inventory.find(p => p.id === prodId);
+
+            if(qty > item.qty) return alert('الكمية المطلوبة أكبر من المتاح بالمخزن!');
+
+            const price = priceType === 'customer' ? item.priceCustomer : item.priceMechanic;
+            const existingCartItem = cart.find(c => c.id === prodId && c.priceType === priceType);
+
+            if(existingCartItem) {
+                existingCartItem.qty += qty;
+                existingCartItem.shipping += (item.category === 'عجل' ? shipping : 0);
+            } else {
+                cart.push({
+                    id: item.id,
+                    name: item.name,
+                    category: item.category,
+                    cost: item.cost,
+                    price: price,
+                    shipping: item.category === 'عجل' ? shipping : 0,
+                    priceType: priceType,
+                    qty: qty
+                });
+            }
+
+            document.getElementById('posShippingCost').value = "0";
+            renderCart();
+        }
+
+        function renderCart() {
+            const tbody = document.getElementById('cartTable');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((c, index) => {
+                const subtotal = (c.price * c.qty) + c.shipping;
+                total += subtotal;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-bold text-white">${c.name}</td>
+                        <td class="p-3 text-xs text-gray-400">${c.category}</td>
+                        <td class="p-3">${c.price.toFixed(2)}</td>
+                        <td class="p-3 font-bold">${c.qty}</td>
+                        <td class="p-3 text-xs">${c.shipping > 0 ? c.shipping.toFixed(2) + ' ج.م' : '-'}</td>
+                        <td class="p-3 font-bold text-white">${subtotal.toFixed(2)}</td>
+                        <td class="p-3"><button onclick="removeFromCart(${index})" class="text-red-400"><i class="fa-solid fa-xmark"></i></button></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('cartTotal').innerText = `${total.toFixed(2)} ج.م`;
+            calcRemaining();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function togglePayInputs() {
+            const payType = document.getElementById('payType').value;
+            const container = document.getElementById('partialPayContainer');
+            if(payType === 'partial') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+            calcRemaining();
+        }
+
+        function calcRemaining() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty) + item.shipping, 0);
+            const payType = document.getElementById('payType').value;
+            let paid = 0;
+
+            if(payType === 'cash') paid = total;
+            else if(payType === 'credit') paid = 0;
+            else if(payType === 'partial') paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+
+            const remaining = total - paid;
+            document.getElementById('remainingAmount').innerText = `${remaining > 0 ? remaining.toFixed(2) : 0} ج.م`;
+        }
+
+        function checkoutAndPrint() {
+            if(cart.length === 0) return alert('الفاتورة فارغة!');
+            const custName = document.getElementById('custName').value.trim() || 'زبون نقدي';
+            const custPhone = document.getElementById('custPhone').value.trim() || '---';
+            const payType = document.getElementById('payType').value;
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty) + item.shipping, 0);
+            let paid = 0;
+            if(payType === 'cash') paid = total;
+            else if(payType === 'credit') paid = 0;
+            else if(payType === 'partial') paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+
+            const remaining = total - paid;
+
+            if(remaining > 0 && custName === 'زبون نقدي') {
+                return alert('برجاء كتابة اسم العميل لتسجيل المتبقي عليه في قسم الآجل!');
+            }
+
+            cart.forEach(c => {
+                const item = inventory.find(i => i.id === c.id);
+                if(item) item.qty -= c.qty;
+            });
+            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+
+            const formattedInvId = 'BZ-' + String(invoiceCounter).padStart(4, '0');
+            invoiceCounter++;
+            localStorage.setItem('bz_invoice_counter', invoiceCounter.toString());
+
+            const saleRecord = {
+                id: formattedInvId,
+                date: new Date().toLocaleDateString('ar-EG'),
+                custName,
+                custPhone,
+                items: [...cart],
+                total,
+                paid,
+                remaining
+            };
+            sales.push(saleRecord);
+            localStorage.setItem('bz_sales_final', JSON.stringify(sales));
+
+            if(remaining > 0) {
+                let debtUser = debts.find(d => d.name === custName);
+                if(debtUser) {
+                    debtUser.totalDebt += remaining;
+                    debtUser.remaining += remaining;
+                } else {
+                    debts.push({
+                        name: custName,
+                        phone: custPhone,
+                        totalDebt: total,
+                        paid: paid,
+                        remaining: remaining
+                    });
+                }
+                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+            }
+
+            document.getElementById('invId').innerText = saleRecord.id;
+            document.getElementById('invCustName').innerText = custName;
+            document.getElementById('invCustPhone').innerText = custPhone;
+            document.getElementById('invDate').innerText = saleRecord.date;
+            document.getElementById('invPayType').innerText = payType === 'cash' ? 'كاش بالكامل' : (payType === 'credit' ? 'آجل بالكامل' : 'دفعة + آجل');
+
+            const invItemsTable = document.getElementById('invItems');
+            invItemsTable.innerHTML = '';
+            let hasBike = false;
+
+            cart.forEach(i => {
+                if(i.category === 'عجل') hasBike = true;
+                const rowTotal = (i.price * i.qty) + i.shipping;
+                invItemsTable.innerHTML += `
+                    <tr>
+                        <td class="py-2 font-bold">${i.name}</td>
+                        <td class="py-2">${i.price.toFixed(2)}</td>
+                        <td class="py-2">${i.qty}</td>
+                        <td class="py-2">${i.shipping > 0 ? i.shipping.toFixed(2) : '-'}</td>
+                        <td class="py-2 font-bold">${rowTotal.toFixed(2)} ج.م</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('invTotal').innerText = `${total.toFixed(2)} ج.م`;
+            document.getElementById('invPaid').innerText = `${paid.toFixed(2)} ج.م`;
+            document.getElementById('invRemaining').innerText = `${remaining.toFixed(2)} ج.م`;
+
+            const warrantyBox = document.getElementById('invWarrantyBox');
+            if(hasBike) {
+                warrantyBox.classList.remove('hidden');
+            } else {
+                warrantyBox.classList.add('hidden');
+            }
+
+            cart = [];
+            renderCart();
+            renderInventory();
+            document.getElementById('custName').value = '';
+            document.getElementById('custPhone').value = '';
+
+            window.print();
+        }
+
+        function renderDebts() {
+            const tbody = document.getElementById('debtsTable');
+            tbody.innerHTML = '';
+            debts.forEach((d, index) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50">
+                        <td class="p-4 font-bold text-white">${d.name}</td>
+                        <td class="p-4 text-gray-400">${d.phone}</td>
+                        <td class="p-4 font-bold text-gray-200">${d.totalDebt.toFixed(2)} ج.م</td>
+                        <td class="p-4 text-gray-400 font-bold">${d.paid.toFixed(2)} ج.م</td>
+                        <td class="p-4 text-gray-200 font-bold">${d.remaining.toFixed(2)} ج.م</td>
+                        <td class="p-4 text-center">
+                            <button onclick="payDebt(${index})" class="bg-white hover:bg-gray-200 text-black text-xs px-3 py-1.5 rounded-lg font-black shadow">
+                                <i class="fa-solid fa-money-bill-wave ml-1"></i>تحصيل دفعة
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function payDebt(index) {
+            const amount = parseFloat(prompt(`أدخل المبلغ المحصل من الزبون (${debts[index].name}):`));
+            if(amount && amount > 0) {
+                debts[index].paid += amount;
+                debts[index].remaining -= amount;
+                if(debts[index].remaining < 0) debts[index].remaining = 0;
+                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+                renderDebts();
+                alert('تم تسجيل الدفعة بنجاح!');
+            }
+        }
+
+        function calculateReports() {
+            let totalSales = sales.reduce((sum, s) => sum + s.total, 0);
+            let totalProfit = 0;
+            sales.forEach(s => {
+                s.items.forEach(item => {
+                    const profitPerItem = item.price - item.cost;
+                    totalProfit += (profitPerItem * item.qty);
+                });
+            });
+
+            let totalDebts = debts.reduce((sum, d) => sum + d.remaining, 0);
+            let stockValue = inventory.reduce((sum, p) => sum + (p.cost * p.qty), 0);
+
+            document.getElementById('repTotalSales').innerText = `${totalSales.toFixed(2)} ج.م`;
+            document.getElementById('repTotalProfit').innerText = `${totalProfit.toFixed(2)} ج.م`;
+            document.getElementById('repTotalDebts').innerText = `${totalDebts.toFixed(2)} ج.م`;
+            document.getElementById('repStockValue').innerText = `${stockValue.toFixed(2)} ج.م`;
+        }
+    </script>
+</body>
+</html>
