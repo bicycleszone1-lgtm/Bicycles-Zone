@@ -128,11 +128,23 @@
                     </h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-400 mb-1">اختر الصنف من المخزن</label>
-                            <select id="posSelectProduct" onchange="checkSelectedCategory()" class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white focus:ring-2 focus:ring-white">
-                                <!-- Loaded dynamically -->
-                            </select>
+                        <div class="md:col-span-2 relative">
+                            <label class="block text-xs font-bold text-gray-400 mb-1">بحث عن الصنف</label>
+                            <input
+                                type="text"
+                                id="posProductSearch"
+                                autocomplete="off"
+                                placeholder="اكتب اسم الصنف للبحث..."
+                                oninput="searchPosProducts()"
+                                onfocus="searchPosProducts()"
+                                class="w-full border border-gray-700 rounded-xl p-3 bg-black text-white placeholder-gray-600 focus:ring-2 focus:ring-white"
+                            >
+                            <input type="hidden" id="posSelectProduct" value="">
+                            <div
+                                id="posProductResults"
+                                class="hidden absolute z-50 top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto"
+                            ></div>
+                            <p id="posSelectedProduct" class="text-xs text-gray-500 mt-1">لم يتم اختيار صنف</p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1">فئة السعر (خاص بك)</label>
@@ -417,18 +429,81 @@
         }
 
         function populatePosDropdown() {
-            const select = document.getElementById('posSelectProduct');
-            select.innerHTML = '<option value="">-- اختر صنفاً من المخزون --</option>';
-            inventory.forEach(p => {
-                if(p.qty > 0) {
-                    select.innerHTML += `<option value="${p.id}">[${p.category}] ${p.name} (المتاح: ${p.qty})</option>`;
-                }
+            const searchInput = document.getElementById('posProductSearch');
+            const hiddenSelect = document.getElementById('posSelectProduct');
+            const results = document.getElementById('posProductResults');
+
+            if(searchInput) searchInput.value = '';
+            if(hiddenSelect) hiddenSelect.value = '';
+            if(results) {
+                results.innerHTML = '';
+                results.classList.add('hidden');
+            }
+
+            const selectedLabel = document.getElementById('posSelectedProduct');
+            if(selectedLabel) selectedLabel.textContent = 'لم يتم اختيار صنف';
+
+            checkSelectedCategory();
+        }
+
+        function searchPosProducts() {
+            const input = document.getElementById('posProductSearch');
+            const results = document.getElementById('posProductResults');
+            if(!input || !results) return;
+
+            const query = input.value.trim().toLowerCase();
+
+            const matches = inventory.filter(p => {
+                if(p.qty <= 0) return false;
+                if(!query) return true;
+                return String(p.name).toLowerCase().includes(query) ||
+                       String(p.category).toLowerCase().includes(query);
             });
+
+            results.innerHTML = '';
+
+            if(matches.length === 0) {
+                results.innerHTML = `
+                    <div class="p-4 text-center text-gray-500 text-sm">
+                        لا يوجد صنف مطابق للبحث
+                    </div>`;
+            } else {
+                matches.forEach(p => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'w-full text-right p-3 hover:bg-gray-800 border-b border-gray-800 last:border-b-0 transition';
+                    button.innerHTML = `
+                        <div class="font-bold text-white">${p.name}</div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            ${p.category} • المتاح: ${p.qty} • قطاعي: ${Number(p.priceCustomer).toFixed(2)} ج.م • جملة: ${Number(p.priceMechanic).toFixed(2)} ج.م
+                        </div>
+                    `;
+                    button.onclick = () => selectPosProduct(p.id);
+                    results.appendChild(button);
+                });
+            }
+
+            results.classList.remove('hidden');
+        }
+
+        function selectPosProduct(prodId) {
+            const item = inventory.find(p => p.id === Number(prodId));
+            if(!item) return;
+
+            document.getElementById('posSelectProduct').value = item.id;
+            document.getElementById('posProductSearch').value = item.name;
+
+            const selectedLabel = document.getElementById('posSelectedProduct');
+            selectedLabel.textContent = `تم اختيار: ${item.name} — المتاح: ${item.qty}`;
+
+            document.getElementById('posProductResults').classList.add('hidden');
+            checkSelectedCategory();
         }
 
         function checkSelectedCategory() {
             const prodId = parseInt(document.getElementById('posSelectProduct').value);
             const shippingContainer = document.getElementById('shippingContainer');
+
             if(prodId) {
                 const item = inventory.find(p => p.id === prodId);
                 if(item && item.category === 'عجل') {
@@ -436,8 +511,18 @@
                     return;
                 }
             }
+
             shippingContainer.classList.add('hidden');
         }
+
+        document.addEventListener('click', (event) => {
+            const searchBox = document.getElementById('posProductSearch');
+            const results = document.getElementById('posProductResults');
+
+            if(searchBox && results && !searchBox.parentElement.contains(event.target)) {
+                results.classList.add('hidden');
+            }
+        });
 
         function addToCart() {
             const prodId = parseInt(document.getElementById('posSelectProduct').value);
@@ -470,6 +555,11 @@
             }
 
             document.getElementById('posShippingCost').value = "0";
+            document.getElementById('posProductSearch').value = "";
+            document.getElementById('posSelectProduct').value = "";
+            document.getElementById('posSelectedProduct').textContent = "لم يتم اختيار صنف";
+            document.getElementById('posProductResults').classList.add('hidden');
+            checkSelectedCategory();
             renderCart();
         }
 
