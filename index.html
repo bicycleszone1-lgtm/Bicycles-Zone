@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام إدارة المبيعات والمخزن النواقص</title>
+  <title>نظام إدارة المبيعات والمخزن والنواقص</title>
   <style>
     :root {
       --primary-color: #2c3e50;
@@ -199,7 +199,7 @@
 
 <div class="container">
   <header>
-    <h1>نظام إدﺍرة المبيعات والمخزن</h1>
+    <h1>نظام إدارة المبيعات والمخزن</h1>
   </header>
 
   <!-- التبويبات -->
@@ -218,7 +218,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>اختر الصنف:</label>
-        <select id="pos-item-select" class="form-control" onchange="updatePosPriceType()"></select>
+        <select id="pos-item-select" class="form-control"></select>
       </div>
       <div class="form-group">
         <label>نوع السعر:</label>
@@ -305,7 +305,7 @@
         <input type="number" id="item-price-worker" class="form-control" min="0">
       </div>
       <div class="form-group">
-        <label>الكمية:</label>
+        <label>الكمية المتاحة:</label>
         <input type="number" id="item-qty" class="form-control" min="0">
       </div>
       <div class="form-group" style="align-self: flex-end;">
@@ -322,7 +322,7 @@
             <th>التكلفة</th>
             <th>سعر الزبون</th>
             <th>سعر الصنايعي</th>
-            <th>الكمية Mتبقية</th>
+            <th>الكمية المتبقية</th>
             <th>إجراءات</th>
           </tr>
         </thead>
@@ -331,7 +331,7 @@
     </div>
   </div>
 
-  <!-- 3. قسم النواقص -->
+  <!-- 3. قسم النواقص (الشاشة تعرض التفاصيل كاملة) -->
   <div id="low-stock" class="tab-content">
     <div class="actions-bar">
       <h3>قائمة الأصناف الناقصة (الكمية 2 أو أقل)</h3>
@@ -375,7 +375,7 @@
     </div>
   </div>
 
-  <!-- 5. التقارير المالية -->
+  <!-- 5. التقارير المالية وإدارة الأرباح -->
   <div id="reports" class="tab-content">
     <div class="stats-grid">
       <div class="stat-card success">
@@ -397,9 +397,13 @@
     </div>
 
     <div style="margin-top: 30px; border-top: 2px solid var(--border-color); padding-top: 20px;">
-      <h3 style="color: var(--accent-color);">إدارة وإعادة ضبط الحسابات</h3>
-      <p style="margin: 10px 0; color: #666;">يمكنك تصفير المبيعات والأرباح المسجلة بالسظام عند بدء فترة مالية جديدة.</p>
-      <button class="btn btn-danger" onclick="resetSalesAndProfits()">🗑️ تصفير المبيعات والأرباح والديون</button>
+      <h3 style="color: var(--accent-color); margin-bottom: 10px;">إدارة وتصفير المبيعات والأرباح</h3>
+      <p style="margin-bottom: 15px; color: #666;">يمكنك تصفير الأرباح والمبيعات بسهولة عند الحاجة لبدء فترة مالية جديدة:</p>
+      
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-warning" onclick="resetProfitsOnly()">💰 تصفير الأرباح فقط</button>
+        <button class="btn btn-danger" onclick="resetSalesAndProfits()">🗑️ تصفير المبيعات والأرباح والسجلات بالكامل</button>
+      </div>
     </div>
   </div>
 </div>
@@ -409,6 +413,7 @@
   let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
   let cart = [];
   let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+  let customProfitReduction = parseFloat(localStorage.getItem('customProfitReduction')) || 0;
 
   // --- إدارة التبويبات ---
   function switchTab(tabId) {
@@ -416,7 +421,9 @@
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (event && event.currentTarget) {
+      event.currentTarget.classList.add('active');
+    }
     
     updateAllViews();
   }
@@ -442,13 +449,11 @@
     if (!name) { alert("يرجى إدخال اسم الصنف!"); return; }
 
     if (id) {
-      // تعديل
       const index = inventory.findIndex(item => item.id == id);
       if (index !== -1) {
         inventory[index] = { id: parseInt(id), name, cost, priceCustomer, priceWorker, quantity: qty };
       }
     } else {
-      // إضافة جديد
       const newItem = { id: Date.now(), name, cost, priceCustomer, priceWorker, quantity: qty };
       inventory.push(newItem);
     }
@@ -481,7 +486,7 @@
   }
 
   function deleteItem(id) {
-    if (confirm("هل انت تأكد من مسح هذا الصنف؟")) {
+    if (confirm("هل أنت تأكد من حذف هذا الصنف؟")) {
       inventory = inventory.filter(i => i.id != id);
       localStorage.setItem('inventory', JSON.stringify(inventory));
       updateAllViews();
@@ -596,7 +601,7 @@
     const paid = parseFloat(document.getElementById('pos-paid-amount').value) || 0;
     const remaining = total - paid;
 
-    // خصم الكميات من المخزن
+    // خصم الكميات
     cart.forEach(c => {
       const invItem = inventory.find(i => i.id == c.itemId);
       if (invItem) invItem.quantity -= c.qty;
@@ -635,11 +640,12 @@
     updateAllViews();
   }
 
-  // --- 3. قسم النواقص والطباعة المعدلة ---
+  // --- 3. شاشة النواقص + طباعة النواقص المخصصة بالجرد ---
   function renderLowStock() {
     const lowStockItems = inventory.filter(i => i.quantity <= 2);
     document.getElementById('low-stock-count').innerText = lowStockItems.length;
 
+    // شاشة النواقص داخل الواجهة تعرض التفاصيل والأسعار كاملة
     const tbody = document.getElementById('low-stock-table-body');
     tbody.innerHTML = '';
     lowStockItems.forEach(item => {
@@ -655,7 +661,7 @@
     });
   }
 
-  // طباعة بيان النواقص المخصص للجرد (بدون أسعار ولا مبالغ ولا كميات متبقية)
+  // طباعة بيان النواقص المخصص للجرد (إخفاء السعر والكمية المتبقية، وإظهار خانات فارغة للكتابة اليدوية)
   function printLowStockInvoice() {
     const lowStockItems = inventory.filter(item => item.quantity <= 2);
 
@@ -677,7 +683,7 @@
           p.subtitle { text-align: center; margin-top: 0; font-size: 14px; color: #555; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           th, td { border: 1px solid #000; padding: 12px; text-align: center; }
-          th { background-color: #f2f2f2; }
+          th { background-color: #f2f2f2; font-size: 15px; }
           .blank-cell { height: 35px; }
         </style>
       </head>
@@ -699,8 +705,8 @@
               <tr>
                 <td>${index + 1}</td>
                 <td style="text-align: right; font-weight: bold;">${item.name}</td>
-                <td class="blank-cell"></td>
-                <td class="blank-cell"></td>
+                <td class="blank-cell"></td> <!-- خانة الكمية فارغة للكتابة اليدوية -->
+                <td class="blank-cell"></td> <!-- خانة مخصصة للسعر/ملاحظات فارغة -->
               </tr>
             `).join('')}
           </tbody>
@@ -802,7 +808,7 @@
     setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
   }
 
-  // --- 5. التقارير المالIة والتصفير ---
+  // --- 5. التقارير المالية وتصفير المبيعات/الأرباح ---
   function renderReports() {
     let totalSales = 0;
     let totalProfits = 0;
@@ -819,21 +825,40 @@
       inventoryValue += (item.cost * item.quantity);
     });
 
+    // خصم الأرباح إذا تم تصفيرها جزئياً
+    let finalProfits = totalProfits - customProfitReduction;
+    if (finalProfits < 0) finalProfits = 0;
+
     document.getElementById('stat-total-sales').innerText = totalSales + ' ج.م';
-    document.getElementById('stat-total-profits').innerText = totalProfits + ' ج.م';
+    document.getElementById('stat-total-profits').innerText = finalProfits + ' ج.م';
     document.getElementById('stat-total-debts').innerText = totalDebts + ' ج.م';
     document.getElementById('stat-inventory-value').innerText = inventoryValue + ' ج.م';
   }
 
-  // تصفير المبيعات والأرباح والديون بسهولة
+  // تصفير الأرباح فقط
+  function resetProfitsOnly() {
+    if (confirm("هل تريد تصفير إجمالي الأرباح المحسوبة فقط؟")) {
+      let totalProfitsCurrent = 0;
+      invoices.forEach(inv => totalProfitsCurrent += inv.profit);
+      
+      customProfitReduction = totalProfitsCurrent;
+      localStorage.setItem('customProfitReduction', customProfitReduction);
+      renderReports();
+      alert("تم تصفير إجمالي الأرباح بنجاح!");
+    }
+  }
+
+  // تصفير المبيعات والأرباح وسجل الفواتير بالكامل
   function resetSalesAndProfits() {
-    const confirmAction = confirm("هل أنت تأكد من رغبتك في تصفير المبيعات، الأرباح، وسجل الفواتير والديون؟\n(ملاحظة: هذا الإجراء لا يمس أصناف المخزن)");
+    const confirmAction = confirm("هل أنت تأكد من تصفير ومسح كافة المبيعات، الأرباح، وسجل الفواتير؟\n(ملاحظة: هذا الإجراء لا يمس أصناف المخزن)");
 
     if (confirmAction) {
       invoices = [];
+      customProfitReduction = 0;
       localStorage.setItem('invoices', JSON.stringify(invoices));
+      localStorage.setItem('customProfitReduction', customProfitReduction);
       updateAllViews();
-      alert("تم تصفير كافة سجلات المبيعات والأرباح بنجاح.");
+      alert("تم تصفير كافة المبيعات والأرباح وسجلات الفواتير بنجاح!");
     }
   }
 
