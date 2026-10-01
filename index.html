@@ -1,4 +1,467 @@
-function addToCart() {
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المبيعات والمخزن</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex flex-wrap justify-between items-center no-print">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-store text-emerald-400 text-2xl"></i>
+            <h1 class="text-xl font-bold text-white">نظام المبيعات والمخزن</h1>
+        </div>
+        <div class="flex gap-2 mt-2 sm:mt-0 flex-wrap">
+            <button onclick="switchTab('pos')" class="nav-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-cash-register"></i> نقطة البيع
+            </button>
+            <button onclick="switchTab('inventory')" class="nav-btn bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked"></i> المخزن
+            </button>
+            <button onclick="switchTab('lowStock')" class="nav-btn relative bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> النواقص
+                <span id="lowStockBadge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            </button>
+            <button onclick="switchTab('salesHistory')" class="nav-btn bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-receipt"></i> سجل الفواتير
+            </button>
+            <button onclick="switchTab('debts')" class="nav-btn bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-hand-holding-dollar"></i> الديون
+            </button>
+            <button onclick="switchTab('reports')" class="nav-btn bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-chart-line"></i> التقارير
+            </button>
+        </div>
+    </nav>
+
+    <div class="p-6 max-w-7xl mx-auto no-print">
+
+        <!-- 1. قسم نقطة البيع (POS) -->
+        <div id="tab-pos" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- اختيار المنتجات والدفع -->
+                <div class="lg:col-span-1 bg-gray-800 p-5 rounded-xl border border-gray-700 space-y-4">
+                    <h2 class="text-lg font-bold text-emerald-400 border-b border-gray-700 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i> إضافة للسلة
+                    </h2>
+
+                    <!-- البحث عن صنف -->
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">البحث عن صنف:</label>
+                        <input type="text" id="posSearch" oninput="filterPosProducts()" placeholder="ابحث بالاسم أو الفئة..." class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <!-- اختيار الصنف -->
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">الصنف:</label>
+                        <select id="posSelectProduct" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                            <!-- يتعبأ ديناميكياً -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">نوع السعر:</label>
+                            <select id="posPriceType" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                                <option value="customer">زبون (قطاعي)</option>
+                                <option value="mechanic">صنايعي (جملة)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">الكمية:</label>
+                            <input type="number" id="posQty" value="1" min="1" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">تكلفة الشحن/النقل (إن وجدت):</label>
+                        <input type="number" id="posShippingCost" value="0" step="0.25" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    </div>
+
+                    <button onclick="addToCart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> إضافة إلى السلة
+                    </button>
+
+                    <div class="border-t border-gray-700 pt-4 space-y-3">
+                        <h3 class="font-bold text-gray-300">بيانات العميل والدفع</h3>
+                        <div>
+                            <input type="text" id="custName" placeholder="اسم العميل (مطلوب للآجل)" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white mb-2">
+                            <input type="text" id="custPhone" placeholder="رقم الهاتف" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">طريقة الدفع:</label>
+                            <select id="payType" onchange="togglePayInputs()" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                                <option value="cash">كاش (دفعة كاملة)</option>
+                                <option value="credit">آجل (بدون دفعة)</option>
+                                <option value="partial">دفعة جزئية + متبقي</option>
+                            </select>
+                        </div>
+
+                        <div id="partialPayContainer" class="hidden">
+                            <label class="block text-sm text-gray-400 mb-1">المبلغ المدفوع:</label>
+                            <input type="number" id="paidAmount" oninput="calcRemaining()" step="0.25" placeholder="0.00" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                        </div>
+
+                        <div class="bg-gray-900 p-3 rounded-lg flex justify-between items-center text-sm">
+                            <span class="text-gray-400">المبلغ المتبقي:</span>
+                            <span id="remainingAmount" class="font-bold text-red-400">0.00 ج.م</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- عرض السلة والإنهاء -->
+                <div class="lg:col-span-2 bg-gray-800 p-5 rounded-xl border border-gray-700 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-emerald-400 border-b border-gray-700 pb-2 mb-4 flex items-center justify-between">
+                            <span><i class="fa-solid fa-basket-shopping"></i> سلة الشراء</span>
+                            <span id="cartTotal" class="text-xl text-white font-extrabold">0.00 ج.م</span>
+                        </h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead>
+                                    <tr class="bg-gray-900 text-gray-400 border-b border-gray-700">
+                                        <th class="p-3">الصنف</th>
+                                        <th class="p-3">الفئة</th>
+                                        <th class="p-3">السعر</th>
+                                        <th class="p-3">الكمية</th>
+                                        <th class="p-3">الشحن</th>
+                                        <th class="p-3">الإجمالي</th>
+                                        <th class="p-3 text-center">إجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartTable" class="divide-y divide-gray-700">
+                                    <!-- عناصر السلة -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end gap-3">
+                        <button onclick="previewInvoiceModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-eye"></i> معاينة الفاتورة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. قسم المخزن (Inventory) -->
+        <div id="tab-inventory" class="tab-content hidden space-y-6">
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-square-plus"></i> إضافة / تعديل صنف بالمخزن
+                </h2>
+                <form id="productForm" onsubmit="saveProduct(event)" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <input type="hidden" id="prodEditId">
+                    <input type="text" id="prodName" placeholder="اسم الصنف" required class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    <select id="prodCategory" class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                        <option value="عجل">عجل (دراجات)</option>
+                        <option value="قطع غيار">قطع غيار</option>
+                        <option value="إكسسوارات">إكسسوارات</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                    <input type="number" id="prodCost" step="0.25" placeholder="سعر التكلفة" required class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    <input type="number" id="prodPriceCust" step="0.25" placeholder="سعر الزبون" required class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    <input type="number" id="prodPriceMech" step="0.25" placeholder="سعر الصنايعي" required class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    <input type="number" id="prodQty" step="1" placeholder="الكمية" required class="bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+                    
+                    <div class="md:col-span-3 lg:col-span-6 flex gap-2 justify-end mt-2">
+                        <button type="button" onclick="resetProductForm()" id="cancelEditBtn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded-lg">إلغاء التعديل</button>
+                        <button type="submit" id="saveProdBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg flex items-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ الصنف
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center justify-between">
+                    <span><i class="fa-solid fa-list-check"></i> قائمة أصناف المخزن</span>
+                    <input type="text" id="inventorySearch" oninput="renderInventory()" placeholder="بحث في المخزن..." class="text-sm font-normal bg-gray-900 border border-gray-700 rounded-lg p-2 text-white w-64">
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="bg-gray-900 text-gray-400 border-b border-gray-700">
+                                <th class="p-3">اسم الصنف</th>
+                                <th class="p-3">الفئة</th>
+                                <th class="p-3">التكلفة</th>
+                                <th class="p-3">سعر الزبون</th>
+                                <th class="p-3">سعر الصنايعي</th>
+                                <th class="p-3">الكمية المتاحة</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTable" class="divide-y divide-gray-700">
+                            <!-- أصناف المخزن -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. قسم النواقص (Low Stock) -->
+        <div id="tab-lowStock" class="tab-content hidden space-y-6">
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                <div class="flex flex-wrap justify-between items-center gap-3 border-b border-gray-700 pb-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> الأصناف الناقصة بالمخزن (الكمية 2 أو أقل)
+                        </h2>
+                        <p class="text-sm text-gray-400 mt-1">هذه القائمة تعرض جميع المنتجات التي أوشكت على النفاد لإعادة طلبها.</p>
+                    </div>
+                    <button onclick="previewLowStockModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> معاينة وطباعة قائمة النواقص
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="bg-gray-900 text-gray-400 border-b border-gray-700">
+                                <th class="p-3">اسم الصنف</th>
+                                <th class="p-3">الفئة</th>
+                                <th class="p-3">التكلفة</th>
+                                <th class="p-3">سعر البيع</th>
+                                <th class="p-3">الكمية المتبقية</th>
+                                <th class="p-3">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTable" class="divide-y divide-gray-700">
+                            <!-- جدول النواقص -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. قسم سجل الفواتير (Sales History) -->
+        <div id="tab-salesHistory" class="tab-content hidden space-y-6">
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center justify-between">
+                    <span><i class="fa-solid fa-receipt"></i> سجل الفواتير المحفوظة</span>
+                    <input type="text" id="salesSearch" oninput="renderSalesHistory()" placeholder="بحث برقم الفاتورة أو العميل..." class="text-sm font-normal bg-gray-900 border border-gray-700 rounded-lg p-2 text-white w-64">
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="bg-gray-900 text-gray-400 border-b border-gray-700">
+                                <th class="p-3">رقم الفاتورة</th>
+                                <th class="p-3">التاريخ</th>
+                                <th class="p-3">العميل</th>
+                                <th class="p-3">نوع الدفع</th>
+                                <th class="p-3">الإجمالي</th>
+                                <th class="p-3">المدفوع</th>
+                                <th class="p-3">المتبقي</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesHistoryTable" class="divide-y divide-gray-700">
+                            <!-- الفواتير -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. قسم الديون (Debts) -->
+        <div id="tab-debts" class="tab-content hidden space-y-6">
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                <h2 class="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> سجل ديون العملاء
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="bg-gray-900 text-gray-400 border-b border-gray-700">
+                                <th class="p-3">اسم العميل</th>
+                                <th class="p-3">الهاتف</th>
+                                <th class="p-3">إجمالي الدين</th>
+                                <th class="p-3">المسدد</th>
+                                <th class="p-3">المتبقي</th>
+                                <th class="p-3 text-center">تحصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="debtsTable" class="divide-y divide-gray-700">
+                            <!-- الديون -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. قسم التقارير (Reports) -->
+        <div id="tab-reports" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                    <div class="text-gray-400 text-sm">إجمالي المبيعات</div>
+                    <div id="repTotalSales" class="text-2xl font-extrabold text-emerald-400 mt-2">0.00 ج.م</div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                    <div class="text-gray-400 text-sm">إجمالي الأرباح</div>
+                    <div id="repTotalProfit" class="text-2xl font-extrabold text-blue-400 mt-2">0.00 ج.م</div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                    <div class="text-gray-400 text-sm">إجمالي الديون المتبقية</div>
+                    <div id="repTotalDebts" class="text-2xl font-extrabold text-red-400 mt-2">0.00 ج.م</div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700">
+                    <div class="text-gray-400 text-sm">قيمة البضاعة بالمخزن (تكلفة)</div>
+                    <div id="repStockValue" class="text-2xl font-extrabold text-purple-400 mt-2">0.00 ج.م</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- modal معاينة الفاتورة قبل الطباعة -->
+    <div id="invoiceModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 no-print">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-emerald-400"></i> معاينة الفاتورة
+                </h3>
+                <button onclick="closeInvoiceModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 bg-white text-black" id="invoicePreviewContent">
+                <!-- محتوى الفاتورة القابل للطباعة -->
+            </div>
+
+            <div class="p-4 border-t border-gray-700 bg-gray-800 flex justify-end gap-3">
+                <button onclick="closeInvoiceModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded-lg">إغلاق</button>
+                <button onclick="printCurrentInvoice()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> طباعة الفاتورة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal تعديل الفاتورة المحفوظة -->
+    <div id="editInvoiceModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 no-print">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-xl p-6 space-y-4">
+            <h3 class="font-bold text-lg text-emerald-400 border-b border-gray-700 pb-2">تعديل بيانيات الفاتورة</h3>
+            <input type="hidden" id="editInvId">
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">اسم العميل:</label>
+                <input type="text" id="editInvCustName" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">رقم الهاتف:</label>
+                <input type="text" id="editInvCustPhone" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">المبلغ المدفوع:</label>
+                <input type="number" id="editInvPaid" step="0.25" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white">
+            </div>
+            <div class="flex justify-end gap-3 pt-3">
+                <button onclick="closeEditInvoiceModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded-lg">إلغاء</button>
+                <button onclick="saveInvoiceEdits()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal معاينة النواقص -->
+    <div id="lowStockModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 no-print">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-amber-400"></i> معاينة قائمة النواقص
+                </h3>
+                <button onclick="closeLowStockModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 bg-white text-black" id="lowStockPreviewContent">
+                <!-- محتوى النواقص للطباعة -->
+            </div>
+
+            <div class="p-4 border-t border-gray-700 bg-gray-800 flex justify-end gap-3">
+                <button onclick="closeLowStockModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded-lg">إغلاق دون طباعة</button>
+                <button onclick="printLowStock()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 py-2 rounded-lg flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> طباعة القائمة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- منطقة الطباعة المباشرة المخفية -->
+    <div id="printArea" class="print-area hidden"></div>
+
+    <script>
+        // البيانات الرئيسية مع الاسترجاع من LocalStorage
+        let inventory = JSON.parse(localStorage.getItem('bz_inventory_final')) || [
+            { id: 1, name: "عجلة مقاس 26 سبورت", category: "عجل", cost: 2500.50, priceCustomer: 3200.00, priceMechanic: 2900.00, qty: 5 },
+            { id: 2, name: "جنط دراجة خلفي", category: "قطع غيار", cost: 120.00, priceCustomer: 180.50, priceMechanic: 150.00, qty: 1 }
+        ];
+
+        let cart = [];
+        let sales = JSON.parse(localStorage.getItem('bz_sales_final')) || [];
+        let debts = JSON.parse(localStorage.getItem('bz_debts_final')) || [];
+        let invoiceCounter = parseInt(localStorage.getItem('bz_invoice_counter')) || 1001;
+
+        let currentPreviewInvoiceData = null;
+
+        // التبديل بين الأقسام
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            if (tabName === 'pos') filterPosProducts();
+            if (tabName === 'inventory') renderInventory();
+            if (tabName === 'lowStock') renderLowStock();
+            if (tabName === 'salesHistory') renderSalesHistory();
+            if (tabName === 'debts') renderDebts();
+            if (tabName === 'reports') calculateReports();
+
+            checkLowStockAlerts();
+        }
+
+        // فحص النواقص للإشعارات
+        function checkLowStockAlerts() {
+            const lowItems = inventory.filter(i => i.qty <= 2);
+            const badge = document.getElementById('lowStockBadge');
+            if (lowItems.length > 0) {
+                badge.textContent = lowItems.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // --- 1. إدارة POS ---
+        function filterPosProducts() {
+            const query = document.getElementById('posSearch').value.toLowerCase();
+            const select = document.getElementById('posSelectProduct');
+            select.innerHTML = '<option value="">-- اختر الصنف --</option>';
+
+            inventory.filter(p => p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)).forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.name} (${p.category}) - المتاح: ${p.qty} - زبون: ${p.priceCustomer.toFixed(2)} / صنايعي: ${p.priceMechanic.toFixed(2)}`;
+                select.appendChild(option);
+            });
+        }
+
+        function addToCart() {
             const prodId = parseInt(document.getElementById('posSelectProduct').value);
             const priceType = document.getElementById('posPriceType').value;
             const qty = parseInt(document.getElementById('posQty').value);
@@ -13,14 +476,11 @@ function addToCart() {
             const existingCartItem = cart.find(c => c.id === prodId && c.priceType === priceType);
 
             if (existingCartItem) {
-                if (existingCartItem.qty + qty > item.qty) {
-                    return alert('الكمية الإجمالية في السلة تتجاوز المتاح بالمخزن!');
-                }
+                if (existingCartItem.qty + qty > item.qty) return alert('الكمية الإجمالية في السلة تتجاوز المتاح!');
                 existingCartItem.qty += qty;
-                existingCartItem.shipping += (item.category === 'عجل' ? shipping : 0);
+                existingCartItem.shipping += shipping;
                 existingCartItem.total = (existingCartItem.qty * price) + existingCartItem.shipping;
             } else {
-                const itemShipping = item.category === 'عجل' ? shipping : 0;
                 cart.push({
                     id: item.id,
                     name: item.name,
@@ -29,12 +489,11 @@ function addToCart() {
                     price: price,
                     priceType: priceType,
                     qty: qty,
-                    shipping: itemShipping,
-                    total: (qty * price) + itemShipping
+                    shipping: shipping,
+                    total: (qty * price) + shipping
                 });
             }
 
-            populatePosDropdown();
             document.getElementById('posQty').value = 1;
             document.getElementById('posShippingCost').value = 0;
             renderCart();
@@ -74,11 +533,8 @@ function addToCart() {
         function togglePayInputs() {
             const type = document.getElementById('payType').value;
             const container = document.getElementById('partialPayContainer');
-            if (type === 'partial') {
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden');
-            }
+            if (type === 'partial') container.classList.remove('hidden');
+            else container.classList.add('hidden');
             calcRemaining();
         }
 
@@ -87,19 +543,16 @@ function addToCart() {
             const payType = document.getElementById('payType').value;
             let paid = 0;
 
-            if (payType === 'cash') {
-                paid = total;
-            } else if (payType === 'credit') {
-                paid = 0;
-            } else {
-                paid = parseFloat(document.getElementById('paidAmount').value) || 0;
-            }
+            if (payType === 'cash') paid = total;
+            else if (payType === 'credit') paid = 0;
+            else paid = parseFloat(document.getElementById('paidAmount').value) || 0;
 
             const remaining = total - paid;
             document.getElementById('remainingAmount').textContent = `${(remaining > 0 ? remaining : 0).toFixed(2)} ج.م`;
         }
 
-        function checkoutAndPrint() {
+        // --- 2. معاينة وطباعة الفاتورة ---
+        function previewInvoiceModal() {
             if (cart.length === 0) return alert('السلة فارغة!');
 
             const custName = document.getElementById('custName').value.trim();
@@ -107,27 +560,18 @@ function addToCart() {
             const payType = document.getElementById('payType').value;
 
             if ((payType === 'credit' || payType === 'partial') && !custName) {
-                return alert('يرجى كتابة اسم الزبون عند الشراء بالآجل!');
+                return alert('يرجى كتابة اسم الزبون عند الشراء بالآجل أو الدفع الجزئي!');
             }
 
             const total = cart.reduce((sum, item) => sum + item.total, 0);
             let paid = 0;
-
             if (payType === 'cash') paid = total;
             else if (payType === 'credit') paid = 0;
             else paid = parseFloat(document.getElementById('paidAmount').value) || 0;
 
             const remaining = total - paid;
 
-            // خصم الكميات من المخزن
-            cart.forEach(c => {
-                const invItem = inventory.find(i => i.id === c.id);
-                if (invItem) invItem.qty -= c.qty;
-            });
-            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
-
-            // تسجيل المبيعات
-            const saleRecord = {
+            currentPreviewInvoiceData = {
                 invoiceId: invoiceCounter,
                 date: new Date().toLocaleString('ar-EG'),
                 customerName: custName || 'عميل نقدي',
@@ -136,95 +580,411 @@ function addToCart() {
                 total: total,
                 paid: paid,
                 remaining: remaining,
-                payType: payType
+                payType: payType,
+                isNew: true
             };
-            sales.push(saleRecord);
-            localStorage.setItem('bz_sales_final', JSON.stringify(sales));
 
-            // تسجيل الآجل إن وجد
-            if (remaining > 0) {
-                const debtItem = debts.find(d => d.name === custName);
-                if (debtItem) {
-                    debtItem.totalDebt += remaining;
-                    debtItem.remaining += remaining;
-                    if (custPhone) debtItem.phone = custPhone;
-                } else {
-                    debts.push({
-                        id: Date.now(),
-                        name: custName,
-                        phone: custPhone || '-',
-                        totalDebt: remaining,
-                        paid: 0,
-                        remaining: remaining
-                    });
+            renderInvoiceHTML(currentPreviewInvoiceData);
+            document.getElementById('invoiceModal').classList.remove('hidden');
+            document.getElementById('invoiceModal').classList.add('flex');
+        }
+
+        function renderInvoiceHTML(data) {
+            let hasBikes = data.items.some(i => i.category === 'عجل');
+
+            let itemsRows = data.items.map(item => `
+                <tr class="border-b border-gray-300">
+                    <td class="py-2 text-right">${item.name}</td>
+                    <td class="py-2 text-center">${item.price.toFixed(2)}</td>
+                    <td class="py-2 text-center">${item.qty}</td>
+                    <td class="py-2 text-center">${item.shipping.toFixed(2)}</td>
+                    <td class="py-2 text-left">${item.total.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <div class="text-right p-4 border border-gray-300 rounded-lg">
+                    <div class="flex justify-between items-center border-b pb-3 mb-3">
+                        <div>
+                            <h2 class="text-2xl font-bold">فاتورة مبيعات</h2>
+                            <p class="text-sm text-gray-600">رقم الفاتورة: #${data.invoiceId}</p>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-sm text-gray-600">التاريخ: ${data.date}</p>
+                            <p class="text-sm font-bold">طريقة الدفع: ${data.payType === 'cash' ? 'كاش' : (data.payType === 'credit' ? 'آجل' : 'جزئي')}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 text-sm">
+                        <p><strong>اسم العميل:</strong> ${data.customerName}</p>
+                        <p><strong>رقم الهاتف:</strong> ${data.customerPhone}</p>
+                    </div>
+
+                    <table class="w-full text-sm mb-4 border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-gray-800 bg-gray-100">
+                                <th class="py-2 text-right">الصنف</th>
+                                <th class="py-2 text-center">السعر</th>
+                                <th class="py-2 text-center">الكمية</th>
+                                <th class="py-2 text-center">الشحن</th>
+                                <th class="py-2 text-left">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsRows}</tbody>
+                    </table>
+
+                    <div class="border-t pt-3 text-sm space-y-1">
+                        <div class="flex justify-between"><span>الإجمالي:</span><span class="font-bold">${data.total.toFixed(2)} ج.م</span></div>
+                        <div class="flex justify-between"><span>المدفوع:</span><span>${data.paid.toFixed(2)} ج.م</span></div>
+                        <div class="flex justify-between"><span>المتبقي:</span><span class="font-bold text-red-600">${(data.remaining > 0 ? data.remaining : 0).toFixed(2)} ج.م</span></div>
+                    </div>
+
+                    ${hasBikes ? `
+                        <div class="mt-4 p-3 bg-gray-50 border border-dashed border-gray-400 rounded text-xs text-center">
+                            <p class="font-bold mb-1">*** شهادة ضمان دراجة ***</p>
+                            <p>تضمن المحل الدراجة ضد عيوب الصناعة لمدة شهرين من تاريخ الشراء.</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('invoicePreviewContent').innerHTML = html;
+        }
+
+        function printCurrentInvoice() {
+            if (!currentPreviewInvoiceData) return;
+
+            // إذا كانت فاتورة جديدة جاري بيعها الآن
+            if (currentPreviewInvoiceData.isNew) {
+                // خصم المخزن
+                currentPreviewInvoiceData.items.forEach(c => {
+                    const invItem = inventory.find(i => i.id === c.id);
+                    if (invItem) invItem.qty -= c.qty;
+                });
+                localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+
+                // حفظ الفاتورة
+                sales.push(currentPreviewInvoiceData);
+                localStorage.setItem('bz_sales_final', JSON.stringify(sales));
+
+                // حفظ الدين إن وجد
+                if (currentPreviewInvoiceData.remaining > 0) {
+                    const debtItem = debts.find(d => d.name === currentPreviewInvoiceData.customerName);
+                    if (debtItem) {
+                        debtItem.totalDebt += currentPreviewInvoiceData.remaining;
+                        debtItem.remaining += currentPreviewInvoiceData.remaining;
+                    } else {
+                        debts.push({
+                            id: Date.now(),
+                            name: currentPreviewInvoiceData.customerName,
+                            phone: currentPreviewInvoiceData.customerPhone,
+                            totalDebt: currentPreviewInvoiceData.remaining,
+                            paid: 0,
+                            remaining: currentPreviewInvoiceData.remaining
+                        });
+                    }
+                    localStorage.setItem('bz_debts_final', JSON.stringify(debts));
                 }
-                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+
+                invoiceCounter++;
+                localStorage.setItem('bz_invoice_counter', invoiceCounter);
+
+                // تفريغ السلة
+                cart = [];
+                document.getElementById('custName').value = '';
+                document.getElementById('custPhone').value = '';
+                document.getElementById('paidAmount').value = '';
+                document.getElementById('payType').value = 'cash';
+                togglePayInputs();
+                renderCart();
+                filterPosProducts();
             }
 
-            // تجهيز الطباعة
-            document.getElementById('invId').textContent = `#${invoiceCounter}`;
-            document.getElementById('invCustName').textContent = custName || 'عميل نقدي';
-            document.getElementById('invCustPhone').textContent = custPhone || '-';
-            document.getElementById('invDate').textContent = saleRecord.date;
-            document.getElementById('invPayType').textContent = payType === 'cash' ? 'كاش' : (payType === 'credit' ? 'آجل' : 'جزئي');
-            document.getElementById('invTotal').textContent = `${total.toFixed(2)} ج.م`;
-            document.getElementById('invPaid').textContent = `${paid.toFixed(2)} ج.م`;
-            document.getElementById('invRemaining').textContent = `${(remaining > 0 ? remaining : 0).toFixed(2)} ج.م`;
+            // تنفيذ الطباعة
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = document.getElementById('invoicePreviewContent').innerHTML;
+            closeInvoiceModal();
+            window.print();
+        }
 
-            const invItemsTbody = document.getElementById('invItems');
-            invItemsTbody.innerHTML = '';
-            let hasBikes = false;
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.add('hidden');
+            document.getElementById('invoiceModal').classList.remove('flex');
+        }
 
-            cart.forEach(item => {
-                if (item.category === 'عجل') hasBikes = true;
-                invItemsTbody.innerHTML += `
-                    <tr>
-                        <td class="py-2">${item.name}</td>
-                        <td class="py-2">${item.price.toFixed(2)}</td>
-                        <td class="py-2">${item.qty}</td>
-                        <td class="py-2">${item.shipping.toFixed(2)}</td>
-                        <td class="py-2">${item.total.toFixed(2)}</td>
+        // --- 3. إدارة المخزن والأسعار العشرية والتعديل ---
+        function renderInventory() {
+            const query = document.getElementById('inventorySearch')?.value.toLowerCase() || '';
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            inventory.filter(p => p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)).forEach(p => {
+                const isLow = p.qty <= 2;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50 ${isLow ? 'bg-amber-950/20' : ''}">
+                        <td class="p-3 font-bold text-white">${p.name}</td>
+                        <td class="p-3 text-gray-400">${p.category}</td>
+                        <td class="p-3 text-gray-300">${p.cost.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-emerald-400">${p.priceCustomer.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-blue-400">${p.priceMechanic.toFixed(2)} ج.م</td>
+                        <td class="p-3 font-bold ${isLow ? 'text-amber-400' : 'text-white'}">${p.qty} ${isLow ? '<i class="fa-solid fa-triangle-exclamation text-xs"></i>' : ''}</td>
+                        <td class="p-3 text-center space-x-2 space-x-reverse">
+                            <button onclick="editProduct(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>
                 `;
             });
 
-            // إظهار مربع الضمان فقط في حالة وجود دراجة
-            const warrantyBox = document.getElementById('invWarrantyBox');
-            if (hasBikes) {
-                warrantyBox.classList.remove('hidden');
-            } else {
-                warrantyBox.classList.add('hidden');
-            }
-
-            // تحديث عداد الفواتير وإعادة الضبط
-            invoiceCounter++;
-            localStorage.setItem('bz_invoice_counter', invoiceCounter);
-
-            window.print();
-
-            cart = [];
-            document.getElementById('custName').value = '';
-            document.getElementById('custPhone').value = '';
-            document.getElementById('paidAmount').value = '';
-            document.getElementById('payType').value = 'cash';
-            togglePayInputs();
-            renderCart();
-            renderInventory();
+            checkLowStockAlerts();
         }
 
+        function saveProduct(e) {
+            e.preventDefault();
+            const editId = document.getElementById('prodEditId').value;
+            const name = document.getElementById('prodName').value.trim();
+            const category = document.getElementById('prodCategory').value;
+            const cost = parseFloat(document.getElementById('prodCost').value);
+            const priceCust = parseFloat(document.getElementById('prodPriceCust').value);
+            const priceMech = parseFloat(document.getElementById('prodPriceMech').value);
+            const qty = parseInt(document.getElementById('prodQty').value);
+
+            if (editId) {
+                // تعديل
+                const prod = inventory.find(i => i.id === parseInt(editId));
+                if (prod) {
+                    prod.name = name;
+                    prod.category = category;
+                    prod.cost = cost;
+                    prod.priceCustomer = priceCust;
+                    prod.priceMechanic = priceMech;
+                    prod.qty = qty;
+                }
+            } else {
+                // إضافة جديد
+                inventory.push({
+                    id: Date.now(),
+                    name: name,
+                    category: category,
+                    cost: cost,
+                    priceCustomer: priceCust,
+                    priceMechanic: priceMech,
+                    qty: qty
+                });
+            }
+
+            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            resetProductForm();
+            renderInventory();
+            filterPosProducts();
+        }
+
+        function editProduct(id) {
+            const prod = inventory.find(i => i.id === id);
+            if (!prod) return;
+
+            document.getElementById('prodEditId').value = prod.id;
+            document.getElementById('prodName').value = prod.name;
+            document.getElementById('prodCategory').value = prod.category;
+            document.getElementById('prodCost').value = prod.cost;
+            document.getElementById('prodPriceCust').value = prod.priceCustomer;
+            document.getElementById('prodPriceMech').value = prod.priceMechanic;
+            document.getElementById('prodQty').value = prod.qty;
+
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('saveProdBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> تحديث الصنف';
+        }
+
+        function resetProductForm() {
+            document.getElementById('productForm').reset();
+            document.getElementById('prodEditId').value = '';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('saveProdBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الصنف';
+        }
+
+        function deleteProduct(id) {
+            if (!confirm('هل أنت تأكد من حذف هذا الصنف من المخزن؟')) return;
+            inventory = inventory.filter(i => i.id !== id);
+            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            renderInventory();
+            filterPosProducts();
+        }
+
+        // --- 4. قسم النواقص والمعاينة والطباعة ---
+        function renderLowStock() {
+            const tbody = document.getElementById('lowStockTable');
+            tbody.innerHTML = '';
+            const lowItems = inventory.filter(i => i.qty <= 2);
+
+            if (lowItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">لا توجد أصناف ناقصة حالياً. جميع المنتجات متوفرة بكميات كافية.</td></tr>`;
+                return;
+            }
+
+            lowItems.forEach(i => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50">
+                        <td class="p-3 font-bold text-white">${i.name}</td>
+                        <td class="p-3 text-gray-400">${i.category}</td>
+                        <td class="p-3 text-gray-300">${i.cost.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-emerald-400">${i.priceCustomer.toFixed(2)} ج.م</td>
+                        <td class="p-3 font-bold text-amber-400">${i.qty}</td>
+                        <td class="p-3 text-xs"><span class="bg-amber-500/20 text-amber-300 px-2 py-1 rounded">يحتاج إعادة طلب</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function previewLowStockModal() {
+            const lowItems = inventory.filter(i => i.qty <= 2);
+            if (lowItems.length === 0) return alert('لا توجد أصناف ناقصة لطباعتها!');
+
+            let rows = lowItems.map((item, index) => `
+                <tr class="border-b border-gray-300">
+                    <td class="py-2 text-center">${index + 1}</td>
+                    <td class="py-2 text-right">${item.name}</td>
+                    <td class="py-2 text-center">${item.category}</td>
+                    <td class="py-2 text-center">${item.cost.toFixed(2)}</td>
+                    <td class="py-2 text-center font-bold text-red-600">${item.qty}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <div class="text-right p-4 border border-gray-300 rounded-lg">
+                    <div class="border-b pb-3 mb-3 text-center">
+                        <h2 class="text-2xl font-bold">تقرير الأصناف الناقصة بالمخزن</h2>
+                        <p class="text-sm text-gray-600">التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
+                    </div>
+
+                    <table class="w-full text-sm border-collapse mb-4">
+                        <thead>
+                            <tr class="border-b-2 border-gray-800 bg-gray-100">
+                                <th class="py-2 text-center">#</th>
+                                <th class="py-2 text-right">اسم الصنف</th>
+                                <th class="py-2 text-center">الفئة</th>
+                                <th class="py-2 text-center">سعر التكلفة</th>
+                                <th class="py-2 text-center">الكمية المتبقية</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('lowStockPreviewContent').innerHTML = html;
+            document.getElementById('lowStockModal').classList.remove('hidden');
+            document.getElementById('lowStockModal').classList.add('flex');
+        }
+
+        function printLowStock() {
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = document.getElementById('lowStockPreviewContent').innerHTML;
+            closeLowStockModal();
+            window.print();
+        }
+
+        function closeLowStockModal() {
+            document.getElementById('lowStockModal').classList.add('hidden');
+            document.getElementById('lowStockModal').classList.remove('flex');
+        }
+
+        // --- 5. سجل الفواتير وتعديلها ومعاينتها ---
+        function renderSalesHistory() {
+            const query = document.getElementById('salesSearch')?.value.toLowerCase() || '';
+            const tbody = document.getElementById('salesHistoryTable');
+            tbody.innerHTML = '';
+
+            sales.filter(s => s.invoiceId.toString().includes(query) || s.customerName.toLowerCase().includes(query)).forEach(s => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-800/50">
+                        <td class="p-3 font-bold text-emerald-400">#${s.invoiceId}</td>
+                        <td class="p-3 text-gray-400 text-xs">${s.date}</td>
+                        <td class="p-3 text-white font-bold">${s.customerName}</td>
+                        <td class="p-3 text-gray-300">${s.payType === 'cash' ? 'كاش' : (s.payType === 'credit' ? 'آجل' : 'جزئي')}</td>
+                        <td class="p-3 font-bold text-white">${s.total.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-gray-300">${s.paid.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-red-400 font-bold">${s.remaining.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-center space-x-2 space-x-reverse">
+                            <button onclick="previewSavedInvoice(${s.invoiceId})" class="text-blue-400 hover:text-blue-300" title="معاينة"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="openEditInvoiceModal(${s.invoiceId})" class="text-amber-400 hover:text-amber-300" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function previewSavedInvoice(invId) {
+            const sale = sales.find(s => s.invoiceId === invId);
+            if (!sale) return;
+
+            currentPreviewInvoiceData = { ...sale, isNew: false };
+            renderInvoiceHTML(currentPreviewInvoiceData);
+            document.getElementById('invoiceModal').classList.remove('hidden');
+            document.getElementById('invoiceModal').classList.add('flex');
+        }
+
+        function openEditInvoiceModal(invId) {
+            const sale = sales.find(s => s.invoiceId === invId);
+            if (!sale) return;
+
+            document.getElementById('editInvId').value = sale.invoiceId;
+            document.getElementById('editInvCustName').value = sale.customerName;
+            document.getElementById('editInvCustPhone').value = sale.customerPhone;
+            document.getElementById('editInvPaid').value = sale.paid;
+
+            document.getElementById('editInvoiceModal').classList.remove('hidden');
+            document.getElementById('editInvoiceModal').classList.add('flex');
+        }
+
+        function saveInvoiceEdits() {
+            const invId = parseInt(document.getElementById('editInvId').value);
+            const sale = sales.find(s => s.invoiceId === invId);
+            if (!sale) return;
+
+            const oldCustomerName = sale.customerName;
+            const newName = document.getElementById('editInvCustName').value.trim();
+            const newPhone = document.getElementById('editInvCustPhone').value.trim();
+            const newPaid = parseFloat(document.getElementById('editInvPaid').value) || 0;
+
+            sale.customerName = newName || 'عميل نقدي';
+            sale.customerPhone = newPhone || '-';
+            sale.paid = newPaid;
+            sale.remaining = sale.total - newPaid;
+
+            // تحديث سجل الديون إذا تغير المتبقي
+            const debtItem = debts.find(d => d.name === oldCustomerName);
+            if (debtItem) {
+                debtItem.name = sale.customerName;
+                debtItem.phone = sale.customerPhone;
+                debtItem.remaining = sale.remaining;
+                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+            }
+
+            localStorage.setItem('bz_sales_final', JSON.stringify(sales));
+            closeEditInvoiceModal();
+            renderSalesHistory();
+            alert('تم تحديث الفاتورة بنجاح!');
+        }
+
+        function closeEditInvoiceModal() {
+            document.getElementById('editInvoiceModal').classList.add('hidden');
+            document.getElementById('editInvoiceModal').classList.remove('flex');
+        }
+
+        // --- 6. الديون والتقارير ---
         function renderDebts() {
             const tbody = document.getElementById('debtsTable');
             tbody.innerHTML = '';
             debts.forEach((d) => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-800/50">
-                        <td class="p-4 font-bold text-white">${d.name}</td>
-                        <td class="p-4 text-gray-400">${d.phone}</td>
-                        <td class="p-4 text-gray-300">${d.totalDebt.toFixed(2)} ج.م</td>
-                        <td class="p-4 text-gray-400">${d.paid.toFixed(2)} ج.م</td>
-                        <td class="p-4 font-bold text-red-400">${d.remaining.toFixed(2)} ج.م</td>
-                        <td class="p-4 text-center">
-                            <button onclick="payDebt(${d.id})" class="bg-white hover:bg-gray-200 text-black px-3 py-1 rounded-lg font-bold text-xs">تحصيل</button>
+                        <td class="p-3 font-bold text-white">${d.name}</td>
+                        <td class="p-3 text-gray-400">${d.phone}</td>
+                        <td class="p-3 text-gray-300">${d.totalDebt.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-gray-400">${d.paid.toFixed(2)} ج.م</td>
+                        <td class="p-3 font-bold text-red-400">${d.remaining.toFixed(2)} ج.م</td>
+                        <td class="p-3 text-center">
+                            <button onclick="payDebt(${d.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg font-bold text-xs">تحصيل</button>
                         </td>
                     </tr>
                 `;
@@ -239,9 +999,7 @@ function addToCart() {
             const amount = parseFloat(amountStr);
 
             if (amount && amount > 0) {
-                if (amount > debt.remaining) {
-                    return alert('المبلغ المدفوع أكبر من باقي الدين!');
-                }
+                if (amount > debt.remaining) return alert('المبلغ المدفوع أكبر من باقي الدين!');
                 debt.paid += amount;
                 debt.remaining -= amount;
 
@@ -271,6 +1029,10 @@ function addToCart() {
             document.getElementById('repTotalDebts').textContent = `${totalDebts.toFixed(2)} ج.م`;
             document.getElementById('repStockValue').textContent = `${stockValue.toFixed(2)} ج.م`;
         }
+
+        // التهيئة الأولى
+        filterPosProducts();
+        checkLowStockAlerts();
     </script>
 </body>
 </html>
