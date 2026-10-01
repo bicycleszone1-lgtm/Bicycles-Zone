@@ -359,7 +359,7 @@
     <!-- modal تعديل الفاتورة المحفوظة -->
     <div id="editInvoiceModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 no-print">
         <div class="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-xl p-6 space-y-4">
-            <h3 class="font-bold text-lg text-emerald-400 border-b border-gray-700 pb-2">تعديل بيانيات الفاتورة</h3>
+            <h3 class="font-bold text-lg text-emerald-400 border-b border-gray-700 pb-2">تعديلبيانيات الفاتورة</h3>
             <input type="hidden" id="editInvId">
             <div>
                 <label class="block text-sm text-gray-400 mb-1">اسم العميل:</label>
@@ -506,19 +506,22 @@
 
             cart.forEach((item, index) => {
                 grandTotal += item.total;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50">
-                        <td class="p-3 font-bold text-white">${item.name}</td>
-                        <td class="p-3 text-gray-400">${item.category}</td>
-                        <td class="p-3 text-gray-300">${item.price.toFixed(2)} ج.م</td>
-                        <td class="p-3 font-bold text-white">${item.qty}</td>
-                        <td class="p-3 text-gray-400">${item.shipping.toFixed(2)} ج.م</td>
-                        <td class="p-3 font-bold text-white">${item.total.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-center">
-                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700 hover:bg-gray-750';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${item.name}</td>
+                    <td class="p-3 text-gray-400">${item.category}</td>
+                    <td class="p-3">${item.price.toFixed(2)} ج.م</td>
+                    <td class="p-3">${item.qty}</td>
+                    <td class="p-3">${item.shipping.toFixed(2)} ج.م</td>
+                    <td class="p-3 font-bold text-emerald-400">${item.total.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-center">
+                        <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-300">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
 
             document.getElementById('cartTotal').textContent = `${grandTotal.toFixed(2)} ج.م`;
@@ -531,180 +534,115 @@
         }
 
         function togglePayInputs() {
-            const type = document.getElementById('payType').value;
-            const container = document.getElementById('partialPayContainer');
-            if (type === 'partial') container.classList.remove('hidden');
-            else container.classList.add('hidden');
+            const payType = document.getElementById('payType').value;
+            const partialContainer = document.getElementById('partialPayContainer');
+            if (payType === 'partial') {
+                partialContainer.classList.remove('hidden');
+            } else {
+                partialContainer.classList.add('hidden');
+            }
             calcRemaining();
         }
 
         function calcRemaining() {
-            const total = cart.reduce((sum, item) => sum + item.total, 0);
+            const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
             const payType = document.getElementById('payType').value;
             let paid = 0;
 
-            if (payType === 'cash') paid = total;
+            if (payType === 'cash') paid = grandTotal;
             else if (payType === 'credit') paid = 0;
-            else paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+            else if (payType === 'partial') paid = parseFloat(document.getElementById('paidAmount').value) || 0;
 
-            const remaining = total - paid;
-            document.getElementById('remainingAmount').textContent = `${(remaining > 0 ? remaining : 0).toFixed(2)} ج.م`;
+            const remaining = grandTotal - paid;
+            document.getElementById('remainingAmount').textContent = `${remaining > 0 ? remaining.toFixed(2) : '0.00'} ج.م`;
         }
 
-        // --- 2. معاينة وطباعة الفاتورة ---
         function previewInvoiceModal() {
             if (cart.length === 0) return alert('السلة فارغة!');
 
             const custName = document.getElementById('custName').value.trim();
             const custPhone = document.getElementById('custPhone').value.trim();
             const payType = document.getElementById('payType').value;
+            const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
+
+            let paid = 0;
+            if (payType === 'cash') paid = grandTotal;
+            else if (payType === 'credit') paid = 0;
+            else if (payType === 'partial') paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+
+            const remaining = grandTotal - paid;
 
             if ((payType === 'credit' || payType === 'partial') && !custName) {
-                return alert('يرجى كتابة اسم الزبون عند الشراء بالآجل أو الدفع الجزئي!');
+                return alert('يرجى إدخال اسم العميل للعمليات الآجلة!');
             }
 
-            const total = cart.reduce((sum, item) => sum + item.total, 0);
-            let paid = 0;
-            if (payType === 'cash') paid = total;
-            else if (payType === 'credit') paid = 0;
-            else paid = parseFloat(document.getElementById('paidAmount').value) || 0;
-
-            const remaining = total - paid;
-
             currentPreviewInvoiceData = {
-                invoiceId: invoiceCounter,
+                id: invoiceCounter,
                 date: new Date().toLocaleString('ar-EG'),
-                customerName: custName || 'عميل نقدي',
-                customerPhone: custPhone || '-',
-                items: [...cart],
-                total: total,
-                paid: paid,
-                remaining: remaining,
+                custName: custName || 'عميل نقدي',
+                custPhone: custPhone || '-',
                 payType: payType,
-                isNew: true
+                items: [...cart],
+                total: grandTotal,
+                paid: paid,
+                remaining: remaining
             };
 
-            renderInvoiceHTML(currentPreviewInvoiceData);
-            document.getElementById('invoiceModal').classList.remove('hidden');
-            document.getElementById('invoiceModal').classList.add('flex');
-        }
-
-        function renderInvoiceHTML(data) {
-            let hasBikes = data.items.some(i => i.category === 'عجل');
-
-            let itemsRows = data.items.map(item => `
+            let itemsRows = currentPreviewInvoiceData.items.map((i, idx) => `
                 <tr class="border-b border-gray-300">
-                    <td class="py-2 text-right">${item.name}</td>
-                    <td class="py-2 text-center">${item.price.toFixed(2)}</td>
-                    <td class="py-2 text-center">${item.qty}</td>
-                    <td class="py-2 text-center">${item.shipping.toFixed(2)}</td>
-                    <td class="py-2 text-left">${item.total.toFixed(2)}</td>
+                    <td class="p-2 border border-gray-300 text-center">${idx + 1}</td>
+                    <td class="p-2 border border-gray-300">${i.name}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.qty}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.price.toFixed(2)}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.shipping.toFixed(2)}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.total.toFixed(2)}</td>
                 </tr>
             `).join('');
 
-            const html = `
-                <div class="text-right p-4 border border-gray-300 rounded-lg">
-                    <div class="flex justify-between items-center border-b pb-3 mb-3">
+            const previewHtml = `
+                <div class="text-right space-y-4">
+                    <div class="flex justify-between items-center border-b pb-3 border-gray-300">
                         <div>
-                            <h2 class="text-2xl font-bold">فاتورة مبيعات</h2>
-                            <p class="text-sm text-gray-600">رقم الفاتورة: #${data.invoiceId}</p>
+                            <h2 class="text-xl font-bold">فاتورة مبيعات</h2>
+                            <p class="text-sm text-gray-600">رقم الفاتورة: #${currentPreviewInvoiceData.id}</p>
+                            <p class="text-sm text-gray-600">التاريخ: ${currentPreviewInvoiceData.date}</p>
                         </div>
                         <div class="text-left">
-                            <p class="text-sm text-gray-600">التاريخ: ${data.date}</p>
-                            <p class="text-sm font-bold">طريقة الدفع: ${data.payType === 'cash' ? 'كاش' : (data.payType === 'credit' ? 'آجل' : 'جزئي')}</p>
+                            <h3 class="font-bold">محل المبيعات والمخزن</h3>
+                            <p class="text-sm text-gray-600">العميل: ${currentPreviewInvoiceData.custName}</p>
+                            <p class="text-sm text-gray-600">الهاتف: ${currentPreviewInvoiceData.custPhone}</p>
                         </div>
                     </div>
 
-                    <div class="mb-4 text-sm">
-                        <p><strong>اسم العميل:</strong> ${data.customerName}</p>
-                        <p><strong>رقم الهاتف:</strong> ${data.customerPhone}</p>
-                    </div>
-
-                    <table class="w-full text-sm mb-4 border-collapse">
+                    <table class="w-full border-collapse border border-gray-300 text-sm">
                         <thead>
-                            <tr class="border-b-2 border-gray-800 bg-gray-100">
-                                <th class="py-2 text-right">الصنف</th>
-                                <th class="py-2 text-center">السعر</th>
-                                <th class="py-2 text-center">الكمية</th>
-                                <th class="py-2 text-center">الشحن</th>
-                                <th class="py-2 text-left">الإجمالي</th>
+                            <tr class="bg-gray-100">
+                                <th class="p-2 border border-gray-300">#</th>
+                                <th class="p-2 border border-gray-300">الصنف</th>
+                                <th class="p-2 border border-gray-300">الكمية</th>
+                                <th class="p-2 border border-gray-300">السعر</th>
+                                <th class="p-2 border border-gray-300">الشحن</th>
+                                <th class="p-2 border border-gray-300">الإجمالي</th>
                             </tr>
                         </thead>
-                        <tbody>${itemsRows}</tbody>
+                        <tbody>
+                            ${itemsRows}
+                        </tbody>
                     </table>
 
-                    <div class="border-t pt-3 text-sm space-y-1">
-                        <div class="flex justify-between"><span>الإجمالي:</span><span class="font-bold">${data.total.toFixed(2)} ج.م</span></div>
-                        <div class="flex justify-between"><span>المدفوع:</span><span>${data.paid.toFixed(2)} ج.م</span></div>
-                        <div class="flex justify-between"><span>المتبقي:</span><span class="font-bold text-red-600">${(data.remaining > 0 ? data.remaining : 0).toFixed(2)} ج.م</span></div>
-                    </div>
-
-                    ${hasBikes ? `
-                        <div class="mt-4 p-3 bg-gray-50 border border-dashed border-gray-400 rounded text-xs text-center">
-                            <p class="font-bold mb-1">*** شهادة ضمان دراجة ***</p>
-                            <p>تضمن المحل الدراجة ضد عيوب الصناعة لمدة شهرين من تاريخ الشراء.</p>
+                    <div class="flex justify-end pt-2">
+                        <div class="w-64 space-y-1 text-sm border-t pt-2 border-gray-300">
+                            <div class="flex justify-between font-bold"><span>الإجمالي:</span><span>${currentPreviewInvoiceData.total.toFixed(2)} ج.م</span></div>
+                            <div class="flex justify-between text-emerald-700"><span>المدفوع:</span><span>${currentPreviewInvoiceData.paid.toFixed(2)} ج.م</span></div>
+                            <div class="flex justify-between text-red-700 font-bold"><span>المتبقي:</span><span>${currentPreviewInvoiceData.remaining.toFixed(2)} ج.م</span></div>
                         </div>
-                    ` : ''}
+                    </div>
                 </div>
             `;
 
-            document.getElementById('invoicePreviewContent').innerHTML = html;
-        }
-
-        function printCurrentInvoice() {
-            if (!currentPreviewInvoiceData) return;
-
-            // إذا كانت فاتورة جديدة جاري بيعها الآن
-            if (currentPreviewInvoiceData.isNew) {
-                // خصم المخزن
-                currentPreviewInvoiceData.items.forEach(c => {
-                    const invItem = inventory.find(i => i.id === c.id);
-                    if (invItem) invItem.qty -= c.qty;
-                });
-                localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
-
-                // حفظ الفاتورة
-                sales.push(currentPreviewInvoiceData);
-                localStorage.setItem('bz_sales_final', JSON.stringify(sales));
-
-                // حفظ الدين إن وجد
-                if (currentPreviewInvoiceData.remaining > 0) {
-                    const debtItem = debts.find(d => d.name === currentPreviewInvoiceData.customerName);
-                    if (debtItem) {
-                        debtItem.totalDebt += currentPreviewInvoiceData.remaining;
-                        debtItem.remaining += currentPreviewInvoiceData.remaining;
-                    } else {
-                        debts.push({
-                            id: Date.now(),
-                            name: currentPreviewInvoiceData.customerName,
-                            phone: currentPreviewInvoiceData.customerPhone,
-                            totalDebt: currentPreviewInvoiceData.remaining,
-                            paid: 0,
-                            remaining: currentPreviewInvoiceData.remaining
-                        });
-                    }
-                    localStorage.setItem('bz_debts_final', JSON.stringify(debts));
-                }
-
-                invoiceCounter++;
-                localStorage.setItem('bz_invoice_counter', invoiceCounter);
-
-                // تفريغ السلة
-                cart = [];
-                document.getElementById('custName').value = '';
-                document.getElementById('custPhone').value = '';
-                document.getElementById('paidAmount').value = '';
-                document.getElementById('payType').value = 'cash';
-                togglePayInputs();
-                renderCart();
-                filterPosProducts();
-            }
-
-            // تنفيذ الطباعة
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = document.getElementById('invoicePreviewContent').innerHTML;
-            closeInvoiceModal();
-            window.print();
+            document.getElementById('invoicePreviewContent').innerHTML = previewHtml;
+            document.getElementById('invoiceModal').classList.remove('hidden');
+            document.getElementById('invoiceModal').classList.add('flex');
         }
 
         function closeInvoiceModal() {
@@ -712,36 +650,85 @@
             document.getElementById('invoiceModal').classList.remove('flex');
         }
 
-        // --- 3. إدارة المخزن والأسعار العشرية والتعديل ---
+        function printCurrentInvoice() {
+            if (!currentPreviewInvoiceData) return;
+
+            // خصم الكميات من المخزن
+            currentPreviewInvoiceData.items.forEach(item => {
+                const invProd = inventory.find(p => p.id === item.id);
+                if (invProd) invProd.qty -= item.qty;
+            });
+
+            // حفظ الفاتورة
+            sales.push(currentPreviewInvoiceData);
+
+            // إدارة سجل الديون
+            if (currentPreviewInvoiceData.remaining > 0) {
+                let debtRecord = debts.find(d => d.custName === currentPreviewInvoiceData.custName);
+                if (debtRecord) {
+                    debtRecord.totalDebt += currentPreviewInvoiceData.remaining;
+                    debtRecord.remainingDebt += currentPreviewInvoiceData.remaining;
+                } else {
+                    debts.push({
+                        custName: currentPreviewInvoiceData.custName,
+                        custPhone: currentPreviewInvoiceData.custPhone,
+                        totalDebt: currentPreviewInvoiceData.remaining,
+                        paidDebt: 0,
+                        remainingDebt: currentPreviewInvoiceData.remaining
+                    });
+                }
+            }
+
+            invoiceCounter++;
+
+            // حفظ التغييرات
+            saveAllData();
+
+            // الطباعة
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = document.getElementById('invoicePreviewContent').innerHTML;
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+
+            // تفريغ السلة وإغلاق النافذة
+            cart = [];
+            document.getElementById('custName').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('paidAmount').value = '';
+            renderCart();
+            closeInvoiceModal();
+            filterPosProducts();
+        }
+
+        // --- 2. إدارة المخزن ---
         function renderInventory() {
-            const query = document.getElementById('inventorySearch')?.value.toLowerCase() || '';
+            const query = document.getElementById('inventorySearch').value.toLowerCase();
             const tbody = document.getElementById('inventoryTable');
             tbody.innerHTML = '';
 
             inventory.filter(p => p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)).forEach(p => {
-                const isLow = p.qty <= 2;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50 ${isLow ? 'bg-amber-950/20' : ''}">
-                        <td class="p-3 font-bold text-white">${p.name}</td>
-                        <td class="p-3 text-gray-400">${p.category}</td>
-                        <td class="p-3 text-gray-300">${p.cost.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-emerald-400">${p.priceCustomer.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-blue-400">${p.priceMechanic.toFixed(2)} ج.م</td>
-                        <td class="p-3 font-bold ${isLow ? 'text-amber-400' : 'text-white'}">${p.qty} ${isLow ? '<i class="fa-solid fa-triangle-exclamation text-xs"></i>' : ''}</td>
-                        <td class="p-3 text-center space-x-2 space-x-reverse">
-                            <button onclick="editProduct(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700 hover:bg-gray-750';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${p.name}</td>
+                    <td class="p-3 text-gray-400">${p.category}</td>
+                    <td class="p-3">${p.cost.toFixed(2)} ج.م</td>
+                    <td class="p-3">${p.priceCustomer.toFixed(2)} ج.م</td>
+                    <td class="p-3">${p.priceMechanic.toFixed(2)} ج.م</td>
+                    <td class="p-3 font-bold ${p.qty <= 2 ? 'text-amber-400' : 'text-emerald-400'}">${p.qty}</td>
+                    <td class="p-3 text-center flex justify-center gap-2">
+                        <button onclick="editProduct(${p.id})" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
-
-            checkLowStockAlerts();
         }
 
         function saveProduct(e) {
             e.preventDefault();
-            const editId = document.getElementById('prodEditId').value;
+            const id = document.getElementById('prodEditId').value;
             const name = document.getElementById('prodName').value.trim();
             const category = document.getElementById('prodCategory').value;
             const cost = parseFloat(document.getElementById('prodCost').value);
@@ -749,121 +736,100 @@
             const priceMech = parseFloat(document.getElementById('prodPriceMech').value);
             const qty = parseInt(document.getElementById('prodQty').value);
 
-            if (editId) {
-                // تعديل
-                const prod = inventory.find(i => i.id === parseInt(editId));
-                if (prod) {
-                    prod.name = name;
-                    prod.category = category;
-                    prod.cost = cost;
-                    prod.priceCustomer = priceCust;
-                    prod.priceMechanic = priceMech;
-                    prod.qty = qty;
+            if (id) {
+                const item = inventory.find(p => p.id === parseInt(id));
+                if (item) {
+                    item.name = name;
+                    item.category = category;
+                    item.cost = cost;
+                    item.priceCustomer = priceCust;
+                    item.priceMechanic = priceMech;
+                    item.qty = qty;
                 }
             } else {
-                // إضافة جديد
-                inventory.push({
-                    id: Date.now(),
-                    name: name,
-                    category: category,
-                    cost: cost,
-                    priceCustomer: priceCust,
-                    priceMechanic: priceMech,
-                    qty: qty
-                });
+                const newId = inventory.length > 0 ? Math.max(...inventory.map(p => p.id)) + 1 : 1;
+                inventory.push({ id: newId, name, category, cost, priceCustomer: priceCust, priceMechanic: priceMech, qty });
             }
 
-            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            saveAllData();
             resetProductForm();
             renderInventory();
-            filterPosProducts();
         }
 
         function editProduct(id) {
-            const prod = inventory.find(i => i.id === id);
-            if (!prod) return;
+            const item = inventory.find(p => p.id === id);
+            if (!item) return;
 
-            document.getElementById('prodEditId').value = prod.id;
-            document.getElementById('prodName').value = prod.name;
-            document.getElementById('prodCategory').value = prod.category;
-            document.getElementById('prodCost').value = prod.cost;
-            document.getElementById('prodPriceCust').value = prod.priceCustomer;
-            document.getElementById('prodPriceMech').value = prod.priceMechanic;
-            document.getElementById('prodQty').value = prod.qty;
+            document.getElementById('prodEditId').value = item.id;
+            document.getElementById('prodName').value = item.name;
+            document.getElementById('prodCategory').value = item.category;
+            document.getElementById('prodCost').value = item.cost;
+            document.getElementById('prodPriceCust').value = item.priceCustomer;
+            document.getElementById('prodPriceMech').value = item.priceMechanic;
+            document.getElementById('prodQty').value = item.qty;
 
             document.getElementById('cancelEditBtn').classList.remove('hidden');
-            document.getElementById('saveProdBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> تحديث الصنف';
+            document.getElementById('saveProdBtn').innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> تحديث الصنف`;
         }
 
         function resetProductForm() {
             document.getElementById('productForm').reset();
             document.getElementById('prodEditId').value = '';
             document.getElementById('cancelEditBtn').classList.add('hidden');
-            document.getElementById('saveProdBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الصنف';
+            document.getElementById('saveProdBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ الصنف`;
         }
 
         function deleteProduct(id) {
-            if (!confirm('هل أنت تأكد من حذف هذا الصنف من المخزن؟')) return;
-            inventory = inventory.filter(i => i.id !== id);
-            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            if (!confirm('هل أنت تأكد من حذف هذا الصنف؟')) return;
+            inventory = inventory.filter(p => p.id !== id);
+            saveAllData();
             renderInventory();
-            filterPosProducts();
         }
 
-        // --- 4. قسم النواقص والمعاينة والطباعة ---
+        // --- 3. إدارة النواقص ---
         function renderLowStock() {
             const tbody = document.getElementById('lowStockTable');
             tbody.innerHTML = '';
             const lowItems = inventory.filter(i => i.qty <= 2);
 
-            if (lowItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">لا توجد أصناف ناقصة حالياً. جميع المنتجات متوفرة بكميات كافية.</td></tr>`;
-                return;
-            }
-
-            lowItems.forEach(i => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50">
-                        <td class="p-3 font-bold text-white">${i.name}</td>
-                        <td class="p-3 text-gray-400">${i.category}</td>
-                        <td class="p-3 text-gray-300">${i.cost.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-emerald-400">${i.priceCustomer.toFixed(2)} ج.م</td>
-                        <td class="p-3 font-bold text-amber-400">${i.qty}</td>
-                        <td class="p-3 text-xs"><span class="bg-amber-500/20 text-amber-300 px-2 py-1 rounded">يحتاج إعادة طلب</span></td>
-                    </tr>
+            lowItems.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700 hover:bg-gray-750';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${p.name}</td>
+                    <td class="p-3 text-gray-400">${p.category}</td>
+                    <td class="p-3">${p.cost.toFixed(2)} ج.م</td>
+                    <td class="p-3">${p.priceCustomer.toFixed(2)} ج.م</td>
+                    <td class="p-3 font-bold text-red-400">${p.qty}</td>
+                    <td class="p-3"><span class="bg-red-900/50 text-red-300 text-xs px-2.5 py-1 rounded-full font-bold">نفاد وشيك</span></td>
                 `;
+                tbody.appendChild(tr);
             });
         }
 
         function previewLowStockModal() {
             const lowItems = inventory.filter(i => i.qty <= 2);
-            if (lowItems.length === 0) return alert('لا توجد أصناف ناقصة لطباعتها!');
-
-            let rows = lowItems.map((item, index) => `
+            let rows = lowItems.map((i, idx) => `
                 <tr class="border-b border-gray-300">
-                    <td class="py-2 text-center">${index + 1}</td>
-                    <td class="py-2 text-right">${item.name}</td>
-                    <td class="py-2 text-center">${item.category}</td>
-                    <td class="py-2 text-center">${item.cost.toFixed(2)}</td>
-                    <td class="py-2 text-center font-bold text-red-600">${item.qty}</td>
+                    <td class="p-2 border border-gray-300 text-center">${idx + 1}</td>
+                    <td class="p-2 border border-gray-300">${i.name}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.category}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.cost.toFixed(2)}</td>
+                    <td class="p-2 border border-gray-300 text-center font-bold text-red-600">${i.qty}</td>
                 </tr>
             `).join('');
 
-            const html = `
-                <div class="text-right p-4 border border-gray-300 rounded-lg">
-                    <div class="border-b pb-3 mb-3 text-center">
-                        <h2 class="text-2xl font-bold">تقرير الأصناف الناقصة بالمخزن</h2>
-                        <p class="text-sm text-gray-600">التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
-                    </div>
-
-                    <table class="w-full text-sm border-collapse mb-4">
+            const content = `
+                <div class="text-right space-y-4">
+                    <h2 class="text-xl font-bold border-b pb-2 border-gray-300">قائمة النواقص بالمتجر</h2>
+                    <table class="w-full border-collapse border border-gray-300 text-sm">
                         <thead>
-                            <tr class="border-b-2 border-gray-800 bg-gray-100">
-                                <th class="py-2 text-center">#</th>
-                                <th class="py-2 text-right">اسم الصنف</th>
-                                <th class="py-2 text-center">الفئة</th>
-                                <th class="py-2 text-center">سعر التكلفة</th>
-                                <th class="py-2 text-center">الكمية المتبقية</th>
+                            <tr class="bg-gray-100">
+                                <th class="p-2 border border-gray-300">#</th>
+                                <th class="p-2 border border-gray-300">الصنف</th>
+                                <th class="p-2 border border-gray-300">الفئة</th>
+                                <th class="p-2 border border-gray-300">التكلفة</th>
+                                <th class="p-2 border border-gray-300">الكمية الحالية</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -871,16 +837,9 @@
                 </div>
             `;
 
-            document.getElementById('lowStockPreviewContent').innerHTML = html;
+            document.getElementById('lowStockPreviewContent').innerHTML = content;
             document.getElementById('lowStockModal').classList.remove('hidden');
             document.getElementById('lowStockModal').classList.add('flex');
-        }
-
-        function printLowStock() {
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = document.getElementById('lowStockPreviewContent').innerHTML;
-            closeLowStockModal();
-            window.print();
         }
 
         function closeLowStockModal() {
@@ -888,82 +847,51 @@
             document.getElementById('lowStockModal').classList.remove('flex');
         }
 
-        // --- 5. سجل الفواتير وتعديلها ومعاينتها ---
+        function printLowStock() {
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = document.getElementById('lowStockPreviewContent').innerHTML;
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+            closeLowStockModal();
+        }
+
+        // --- 4. سجل الفواتير ---
         function renderSalesHistory() {
-            const query = document.getElementById('salesSearch')?.value.toLowerCase() || '';
+            const query = document.getElementById('salesSearch').value.toLowerCase();
             const tbody = document.getElementById('salesHistoryTable');
             tbody.innerHTML = '';
 
-            sales.filter(s => s.invoiceId.toString().includes(query) || s.customerName.toLowerCase().includes(query)).forEach(s => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50">
-                        <td class="p-3 font-bold text-emerald-400">#${s.invoiceId}</td>
-                        <td class="p-3 text-gray-400 text-xs">${s.date}</td>
-                        <td class="p-3 text-white font-bold">${s.customerName}</td>
-                        <td class="p-3 text-gray-300">${s.payType === 'cash' ? 'كاش' : (s.payType === 'credit' ? 'آجل' : 'جزئي')}</td>
-                        <td class="p-3 font-bold text-white">${s.total.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-gray-300">${s.paid.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-red-400 font-bold">${s.remaining.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-center space-x-2 space-x-reverse">
-                            <button onclick="previewSavedInvoice(${s.invoiceId})" class="text-blue-400 hover:text-blue-300" title="معاينة"><i class="fa-solid fa-eye"></i></button>
-                            <button onclick="openEditInvoiceModal(${s.invoiceId})" class="text-amber-400 hover:text-amber-300" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
-                        </td>
-                    </tr>
+            sales.filter(s => s.id.toString().includes(query) || s.custName.toLowerCase().includes(query)).forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700 hover:bg-gray-750';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">#${s.id}</td>
+                    <td class="p-3 text-gray-400">${s.date}</td>
+                    <td class="p-3">${s.custName}</td>
+                    <td class="p-3"><span class="text-xs px-2 py-1 rounded bg-gray-700">${s.payType}</span></td>
+                    <td class="p-3 font-bold">${s.total.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-emerald-400">${s.paid.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-red-400 font-bold">${s.remaining.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-center flex justify-center gap-2">
+                        <button onclick="openEditInvoiceModal(${s.id})" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
         }
 
-        function previewSavedInvoice(invId) {
-            const sale = sales.find(s => s.invoiceId === invId);
+        function openEditInvoiceModal(id) {
+            const sale = sales.find(s => s.id === id);
             if (!sale) return;
 
-            currentPreviewInvoiceData = { ...sale, isNew: false };
-            renderInvoiceHTML(currentPreviewInvoiceData);
-            document.getElementById('invoiceModal').classList.remove('hidden');
-            document.getElementById('invoiceModal').classList.add('flex');
-        }
-
-        function openEditInvoiceModal(invId) {
-            const sale = sales.find(s => s.invoiceId === invId);
-            if (!sale) return;
-
-            document.getElementById('editInvId').value = sale.invoiceId;
-            document.getElementById('editInvCustName').value = sale.customerName;
-            document.getElementById('editInvCustPhone').value = sale.customerPhone;
+            document.getElementById('editInvId').value = sale.id;
+            document.getElementById('editInvCustName').value = sale.custName;
+            document.getElementById('editInvCustPhone').value = sale.custPhone;
             document.getElementById('editInvPaid').value = sale.paid;
 
             document.getElementById('editInvoiceModal').classList.remove('hidden');
             document.getElementById('editInvoiceModal').classList.add('flex');
-        }
-
-        function saveInvoiceEdits() {
-            const invId = parseInt(document.getElementById('editInvId').value);
-            const sale = sales.find(s => s.invoiceId === invId);
-            if (!sale) return;
-
-            const oldCustomerName = sale.customerName;
-            const newName = document.getElementById('editInvCustName').value.trim();
-            const newPhone = document.getElementById('editInvCustPhone').value.trim();
-            const newPaid = parseFloat(document.getElementById('editInvPaid').value) || 0;
-
-            sale.customerName = newName || 'عميل نقدي';
-            sale.customerPhone = newPhone || '-';
-            sale.paid = newPaid;
-            sale.remaining = sale.total - newPaid;
-
-            // تحديث سجل الديون إذا تغير المتبقي
-            const debtItem = debts.find(d => d.name === oldCustomerName);
-            if (debtItem) {
-                debtItem.name = sale.customerName;
-                debtItem.phone = sale.customerPhone;
-                debtItem.remaining = sale.remaining;
-                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
-            }
-
-            localStorage.setItem('bz_sales_final', JSON.stringify(sales));
-            closeEditInvoiceModal();
-            renderSalesHistory();
-            alert('تم تحديث الفاتورة بنجاح!');
         }
 
         function closeEditInvoiceModal() {
@@ -971,58 +899,81 @@
             document.getElementById('editInvoiceModal').classList.remove('flex');
         }
 
-        // --- 6. الديون والتقارير ---
+        function saveInvoiceEdits() {
+            const id = parseInt(document.getElementById('editInvId').value);
+            const sale = sales.find(s => s.id === id);
+            if (!sale) return;
+
+            const oldRemaining = sale.remaining;
+            const newCustName = document.getElementById('editInvCustName').value.trim();
+            const newCustPhone = document.getElementById('editInvCustPhone').value.trim();
+            const newPaid = parseFloat(document.getElementById('editInvPaid').value) || 0;
+
+            sale.custName = newCustName;
+            sale.custPhone = newCustPhone;
+            sale.paid = newPaid;
+            sale.remaining = sale.total - newPaid;
+
+            // تحديث سجل الدين
+            let debtRecord = debts.find(d => d.custName === sale.custName);
+            if (debtRecord) {
+                const diff = sale.remaining - oldRemaining;
+                debtRecord.remainingDebt += diff;
+            }
+
+            saveAllData();
+            closeEditInvoiceModal();
+            renderSalesHistory();
+        }
+
+        // --- 5. سجل الديون ---
         function renderDebts() {
             const tbody = document.getElementById('debtsTable');
             tbody.innerHTML = '';
-            debts.forEach((d) => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-800/50">
-                        <td class="p-3 font-bold text-white">${d.name}</td>
-                        <td class="p-3 text-gray-400">${d.phone}</td>
-                        <td class="p-3 text-gray-300">${d.totalDebt.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-gray-400">${d.paid.toFixed(2)} ج.م</td>
-                        <td class="p-3 font-bold text-red-400">${d.remaining.toFixed(2)} ج.م</td>
-                        <td class="p-3 text-center">
-                            <button onclick="payDebt(${d.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg font-bold text-xs">تحصيل</button>
-                        </td>
-                    </tr>
+
+            debts.forEach((d, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-700 hover:bg-gray-750';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${d.custName}</td>
+                    <td class="p-3 text-gray-400">${d.custPhone}</td>
+                    <td class="p-3">${d.totalDebt.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-emerald-400">${d.paidDebt.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-red-400 font-bold">${d.remainingDebt.toFixed(2)} ج.م</td>
+                    <td class="p-3 text-center">
+                        <button onclick="payDebtPrompt(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs font-bold">تحصيل دفعة</button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
         }
 
-        function payDebt(debtId) {
-            const debt = debts.find(d => d.id === debtId);
-            if (!debt) return;
-
-            const amountStr = prompt(`المبلغ المتبقي على العميل (${debt.name}) هو ${debt.remaining.toFixed(2)} ج.م.\nأدخل المبلغ المراد تحصيله:`);
-            const amount = parseFloat(amountStr);
-
+        function payDebtPrompt(idx) {
+            const debt = debts[idx];
+            const amount = parseFloat(prompt(`إجمالي المتبقي على العميل (${debt.custName}): ${debt.remainingDebt.toFixed(2)} ج.م\nأدخل مبلغ التحصيل:`));
+            
             if (amount && amount > 0) {
-                if (amount > debt.remaining) return alert('المبلغ المدفوع أكبر من باقي الدين!');
-                debt.paid += amount;
-                debt.remaining -= amount;
-
-                localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+                debt.paidDebt += amount;
+                debt.remainingDebt -= amount;
+                saveAllData();
                 renderDebts();
-                alert('تم تسجيل التحصيل بنجاح!');
             }
         }
 
+        // --- 6. التقارير ---
         function calculateReports() {
-            let totalSales = 0;
-            let totalProfit = 0;
+            const totalSales = sales.reduce((sum, s) => sum + s.total, 0);
+            const totalDebts = debts.reduce((sum, d) => sum + d.remainingDebt, 0);
+            const stockValue = inventory.reduce((sum, i) => sum + (i.cost * i.qty), 0);
 
+            // حساب الأرباح
+            let totalProfit = 0;
             sales.forEach(s => {
-                totalSales += s.total;
-                s.items.forEach(item => {
-                    const profitPerUnit = item.price - item.cost;
-                    totalProfit += (profitPerUnit * item.qty);
+                s.items.forEach(i => {
+                    const profitPerItem = i.price - i.cost;
+                    totalProfit += (profitPerItem * i.qty);
                 });
             });
-
-            const totalDebts = debts.reduce((sum, d) => sum + d.remaining, 0);
-            const stockValue = inventory.reduce((sum, p) => sum + (p.cost * p.qty), 0);
 
             document.getElementById('repTotalSales').textContent = `${totalSales.toFixed(2)} ج.م`;
             document.getElementById('repTotalProfit').textContent = `${totalProfit.toFixed(2)} ج.م`;
@@ -1030,7 +981,16 @@
             document.getElementById('repStockValue').textContent = `${stockValue.toFixed(2)} ج.م`;
         }
 
-        // التهيئة الأولى
+        // الحفظ الرئيسي
+        function saveAllData() {
+            localStorage.setItem('bz_inventory_final', JSON.stringify(inventory));
+            localStorage.setItem('bz_sales_final', JSON.stringify(sales));
+            localStorage.setItem('bz_debts_final', JSON.stringify(debts));
+            localStorage.setItem('bz_invoice_counter', invoiceCounter.toString());
+            checkLowStockAlerts();
+        }
+
+        // التهيئة الأولية
         filterPosProducts();
         checkLowStockAlerts();
     </script>
