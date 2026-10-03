@@ -3,48 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الفواتير والنواقص</title>
+    <title>نظام إدارة المبيعات والفواتير والشؤون المالية</title>
     <style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --bg-color: #f8f9fa;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --dark-text: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
+            background-color: #f4f7f6;
+            color: var(--dark-text);
             padding: 20px;
-            color: #333;
+            direction: rtl;
         }
 
-        .container {
-            max-width: 1000px;
+        .app-container {
+            max-width: 1200px;
             margin: 0 auto;
             background: #fff;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
-        h2 {
-            color: var(--primary-color);
+        /* Nav Tabs */
+        .nav-tabs {
+            display: flex;
+            background: var(--primary-color);
+            list-style: none;
             border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 10px;
-            margin-top: 0;
         }
 
-        .controls-section {
-            background: #f1f4f8;
+        .nav-tabs li {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-tabs a {
+            display: block;
+            padding: 15px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-tabs a:hover, .nav-tabs a.active {
+            background: var(--secondary-color);
+        }
+
+        .tab-content {
+            padding: 25px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Forms & Inputs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
+            border: 1px solid #e9ecef;
         }
 
         .form-group {
@@ -53,243 +93,582 @@
             gap: 5px;
         }
 
-        label {
+        .form-group label {
+            font-size: 13px;
             font-weight: bold;
-            font-size: 0.9em;
+            color: var(--primary-color);
         }
 
-        select, input, button {
-            padding: 10px 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+        .form-group input, .form-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            outline: none;
             font-size: 14px;
         }
 
-        button {
-            background-color: var(--secondary-color);
-            color: white;
+        .btn {
+            padding: 10px 20px;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.2s;
             font-weight: bold;
+            color: #fff;
+            transition: 0.2s;
+            display: inline-block;
         }
 
-        button:hover {
-            background-color: #2980b9;
-        }
+        .btn-primary { background: var(--secondary-color); }
+        .btn-success { background: var(--success-color); }
+        .btn-warning { background: var(--warning-color); }
+        .btn-danger { background: var(--danger-color); }
 
-        .btn-print {
-            background-color: #27ae60;
-        }
+        .btn:hover { opacity: 0.9; }
 
-        .btn-print:hover {
-            background-color: #219150;
-        }
-
-        /* تنسيق الجداول */
+        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
 
-        th, td {
-            border: 1px solid #e0e0e0;
-            padding: 12px;
+        table th, table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
             text-align: center;
+            font-size: 14px;
         }
 
-        th {
+        table th {
             background-color: var(--primary-color);
             color: white;
         }
 
-        .summary-box {
-            margin-top: 20px;
-            float: left;
-            width: 300px;
-            background: #fafafa;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
-        .summary-row {
+        /* Header for Invoice Printing */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .merchant-details p {
+            margin: 3px 0;
+            font-size: 14px;
+        }
+
+        /* Summary Box */
+        .summary-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            width: 320px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .summary-item {
             display: flex;
             justify-content: space-between;
             padding: 6px 0;
-            font-size: 1.05em;
+            font-size: 14px;
         }
 
-        .summary-row.total {
-            border-top: 2px dashed #bbb;
-            font-weight: bold;
-            font-size: 1.2em;
-            color: var(--accent-color);
-            margin-top: 5px;
+        .summary-item.grand-total {
+            border-top: 2px dashed var(--border-color);
+            margin-top: 8px;
             padding-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--danger-color);
         }
 
-        .clear-fix {
-            clear: both;
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        /* ---------------------------------------------------- */
-        /* قواعد الطباعة (تُطبق فقط عند أمر الطباعة Window.print) */
-        /* ---------------------------------------------------- */
+        /* Print Media Rules */
         @media print {
             body {
                 background: white;
                 padding: 0;
             }
 
-            .no-print, .controls-section {
+            .no-print, .nav-tabs, .form-grid, .action-btns, .delete-btn {
                 display: none !important;
             }
 
-            .container {
+            .app-container {
                 box-shadow: none;
-                padding: 0;
+                border-radius: 0;
                 width: 100%;
                 max-width: 100%;
             }
 
-            /* إخفاء بيانات التاجر والأسعار في فاتورة النواقص */
-            body.print-shortages .merchant-info,
-            body.print-shortages .price-column,
-            body.print-shortages .available-column,
-            body.print-shortages .summary-box {
+            .tab-content {
                 display: none !important;
             }
 
-            /* إظهار كروت الحساب فقط في حالة الطباعة العادية */
-            body.print-shortages .invoice-title::after {
-                content: "فاتورة النواقص";
+            .tab-content.print-active {
+                display: block !important;
             }
 
-            body.print-shortages .invoice-title-text {
-                display: none;
+            /* فاتورة النواقص - إخفاء السعر، التاجر، المتاح */
+            body.shortages-print-mode .merchant-details,
+            body.shortages-print-mode .price-col,
+            body.shortages-print-mode .available-col,
+            body.shortages-print-mode .summary-wrapper {
+                display: none !important;
             }
 
-            th, td {
+            body.shortages-print-mode .main-invoice-title {
+                display: none !important;
+            }
+
+            body.shortages-print-mode .shortages-invoice-title {
+                display: block !important;
+            }
+
+            table th, table td {
                 border: 1px solid #000 !important;
                 color: #000 !important;
             }
 
-            th {
+            table th {
                 background-color: #f0f0f0 !important;
             }
+        }
+
+        .shortages-invoice-title {
+            display: none;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- لوحة التحكم للطباعة واختيار العملاء -->
-    <div class="controls-section no-print">
-        <div class="form-group">
-            <label for="customerSelect">اختر العميل (اختياري لربط حساب قديم):</label>
-            <select id="customerSelect" onchange="updateCustomerBalance()">
-                <option value="">-- بدون تحديد عميل --</option>
-                <option value="1" data-balance="250">أحمد محمود (رصيد سابق: 250)</option>
-                <option value="2" data-balance="500">شركة الأمل (رصيد سابق: 500)</option>
-                <option value="3" data-balance="0">مصطفى علي (رصيد سابق: 0)</option>
-            </select>
+<div class="app-container">
+    <!-- Navigation Tabs -->
+    <ul class="nav-tabs no-print">
+        <li><a class="active" onclick="switchTab('invoice-tab')">إنشاء فاتورة</a></li>
+        <li><a onclick="switchTab('products-tab')">إدارة المنتجات</a></li>
+        <li><a onclick="switchTab('customers-tab')">إدارة العملاء</a></li>
+        <li><a onclick="switchTab('shortages-tab')">النواقص</a></li>
+    </ul>
+
+    <!-- 1. TAB: CREATE INVOICE -->
+    <div id="invoice-tab" class="tab-content active print-active">
+        <div class="invoice-header">
+            <div>
+                <h2 class="main-invoice-title">فاتورة مبيعات</h2>
+                <h2 class="shortages-invoice-title">فاتورة النواقص</h2>
+            </div>
+            <!-- بدون أيموشن الهاتف -->
+            <div class="merchant-details">
+                <p><strong>اسم التاجر:</strong> محلات السلام للتجارة</p>
+                <p><strong>رقم الهاتف:</strong> 01012345678</p>
+            </div>
         </div>
 
-        <div class="form-group" style="margin-top: auto;">
-            <button class="btn-print" onclick="printStandardInvoice()">طباعة فاتورة العميل</button>
+        <!-- Controls Section -->
+        <div class="form-grid no-print">
+            <div class="form-group">
+                <label>اختر العميل (إضافة رصيد سابق اختياري):</label>
+                <select id="invoiceCustomerSelect" onchange="applyCustomerBalance()">
+                    <option value="" data-balance="0">-- بدون تحديد عميل --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>اختر المنتج:</label>
+                <select id="invoiceProductSelect">
+                    <option value="">-- اختر منتج --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>الكمية المطلوب إضافتها:</label>
+                <input type="number" id="invoiceQty" value="1" min="1">
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="addItemToInvoice()">إضافة للفاتورة</button>
+            </div>
         </div>
 
-        <div class="form-group" style="margin-top: auto;">
-            <button class="btn-print" style="background-color: #e67e22;" onclick="printShortagesInvoice()">طباعة فاتورة النواقص</button>
+        <!-- Table -->
+        <table id="invoiceItemsTable">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">عدد</th>
+                    <th>اسم المنتج</th>
+                    <th class="available-col" style="width: 15%;">المتاح</th>
+                    <th class="price-col" style="width: 15%;">السعر</th>
+                    <th class="price-col" style="width: 15%;">الإجمالي</th>
+                    <th class="no-print" style="width: 10%;">إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamic Content -->
+            </tbody>
+        </table>
+
+        <!-- Summary Calculation Box -->
+        <div class="summary-wrapper">
+            <div class="summary-card">
+                <div class="summary-item">
+                    <span>الرصيد السابق:</span>
+                    <span id="lblPrevBalance">0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span>الرصيد الحالي:</span>
+                    <span id="lblCurrBalance">0.00</span>
+                </div>
+                <div class="summary-item grand-total">
+                    <span>الإجمالي:</span>
+                    <span id="lblGrandTotal">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-btns no-print">
+            <button class="btn btn-success" onclick="printStandardInvoice()">طباعة الفاتورة</button>
+            <button class="btn btn-warning" onclick="printShortagesInvoice()">طباعة فاتورة النواقص</button>
         </div>
     </div>
 
-    <!-- ترويسة الفاتورة -->
-    <div class="header">
-        <h2 class="invoice-title">
-            <span class="invoice-title-text">فاتورة المبيعات</span>
-        </h2>
-        
-        <!-- معلومات التواصل (تم إزالة أيموشن الفون) -->
-        <div class="merchant-info">
-            <p>اسم التاجر: محلات السلام للتجارة</p>
-            <p>رقم الهاتف: 01012345678</p>
+    <!-- 2. TAB: PRODUCTS MANAGEMENT -->
+    <div id="products-tab" class="tab-content">
+        <h2>إدارة المنتجات والمخزون</h2>
+        <br>
+        <div class="form-grid no-print">
+            <div class="form-group">
+                <label>اسم المنتج:</label>
+                <input type="text" id="prodName" placeholder="أدخل اسم المنتج">
+            </div>
+            <div class="form-group">
+                <label>الكمية المتاحة:</label>
+                <input type="number" id="prodQty" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>السعر:</label>
+                <input type="number" id="prodPrice" placeholder="0.00">
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="addNewProduct()">حفظ المنتج</button>
+            </div>
         </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>م</th>
+                    <th>اسم المنتج</th>
+                    <th>الكمية المتاحة</th>
+                    <th>السعر</th>
+                    <th class="no-print">حذف</th>
+                </tr>
+            </thead>
+            <tbody id="productsTableBody">
+                <!-- Dynamic Content -->
+            </tbody>
+        </table>
     </div>
 
-    <!-- جدول المنتجات -->
-    <table id="invoiceTable">
-        <thead>
-            <tr>
-                <th class="count-column">عدد</th>
-                <th>اسم المنتج</th>
-                <th class="price-column">السعر</th>
-                <th class="price-column">الإجمالي</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>2</td>
-                <td>منتج أ</td>
-                <td class="price-column">150</td>
-                <td class="price-column">300</td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td>منتج ب</td>
-                <td class="price-column">40</td>
-                <td class="price-column">200</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- 3. TAB: CUSTOMERS MANAGEMENT -->
+    <div id="customers-tab" class="tab-content">
+        <h2>إدارة العملاء والديون</h2>
+        <br>
+        <div class="form-grid no-print">
+            <div class="form-group">
+                <label>اسم العميل:</label>
+                <input type="text" id="custName" placeholder="أدخل اسم العميل">
+            </div>
+            <div class="form-group">
+                <label>رقم الهاتف:</label>
+                <input type="text" id="custPhone" placeholder="أدخل رقم الهاتف">
+            </div>
+            <div class="form-group">
+                <label>الرصيد السابق:</label>
+                <input type="number" id="custBalance" placeholder="0.00">
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="addNewCustomer()">حفظ العميل</button>
+            </div>
+        </div>
 
-    <!-- صندوق ملخص الحسابات -->
-    <div class="summary-box">
-        <div class="summary-row">
-            <span>الرصيد السابق:</span>
-            <span id="previousBalance">0</span>
-        </div>
-        <div class="summary-row">
-            <span>الرصيد الحالي:</span>
-            <span id="currentBalance">500</span>
-        </div>
-        <div class="summary-row total">
-            <span>الإجمالي:</span>
-            <span id="grandTotal">500</span>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>م</th>
+                    <th>اسم العميل</th>
+                    <th>رقم الهاتف</th>
+                    <th>الرصيد السابق</th>
+                    <th class="no-print">حذف</th>
+                </tr>
+            </thead>
+            <tbody id="customersTableBody">
+                <!-- Dynamic Content -->
+            </tbody>
+        </table>
     </div>
 
-    <div class="clear-fix"></div>
+    <!-- 4. TAB: SHORTAGES LIST -->
+    <div id="shortages-tab" class="tab-content">
+        <h2>قائمة المنتجات الناقصة (النواقص)</h2>
+        <br>
+        <table>
+            <thead>
+                <tr>
+                    <th>عدد</th>
+                    <th>اسم المنتج</th>
+                    <th>الكمية الحالية بالمخزن</th>
+                </tr>
+            </thead>
+            <tbody id="shortagesTableBody">
+                <!-- Dynamic Content -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // تحديث الرصيد السابق والإجمالي بناءً على العميل المختار
-    function updateCustomerBalance() {
-        const select = document.getElementById('customerSelect');
+    // State Data
+    let products = [
+        { id: 1, name: "شاحن سامسونج سريع", qty: 3, price: 120 },
+        { id: 2, name: "كابل آيفون أصلـي", qty: 0, price: 200 },
+        { id: 3, name: "سماعة بلوتوث P9", qty: 15, price: 350 }
+    ];
+
+    let customers = [
+        { id: 1, name: "أحمد محمود", phone: "01000000000", balance: 150 },
+        { id: 2, name: "شركة الأمل للتجارة", phone: "01100000000", balance: 500 }
+    ];
+
+    let currentInvoiceItems = [];
+
+    // Switch Tabs
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active', 'print-active');
+        });
+        document.querySelectorAll('.nav-tabs a').forEach(a => {
+            a.classList.remove('active');
+        });
+
+        const activeTab = document.getElementById(tabId);
+        activeTab.classList.add('active', 'print-active');
+        
+        event.currentTarget.classList.add('active');
+
+        if(tabId === 'shortages-tab') renderShortages();
+    }
+
+    // Render Products Select & Tables
+    function renderProducts() {
+        const pTable = document.getElementById('productsTableBody');
+        const pSelect = document.getElementById('invoiceProductSelect');
+        
+        pTable.innerHTML = '';
+        pSelect.innerHTML = '<option value="">-- اختر منتج --</option>';
+
+        products.forEach((p, index) => {
+            pTable.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${p.name}</td>
+                    <td>${p.qty}</td>
+                    <td>${p.price.toFixed(2)}</td>
+                    <td class="no-print"><button class="btn btn-danger" onclick="deleteProduct(${p.id})">حذف</button></td>
+                </tr>
+            `;
+
+            pSelect.innerHTML += `<option value="${p.id}">${p.name} (المتاح: ${p.qty})</option>`;
+        });
+    }
+
+    // Render Customers Select & Tables
+    function renderCustomers() {
+        const cTable = document.getElementById('customersTableBody');
+        const cSelect = document.getElementById('invoiceCustomerSelect');
+
+        cTable.innerHTML = '';
+        cSelect.innerHTML = '<option value="" data-balance="0">-- بدون تحديد عميل --</option>';
+
+        customers.forEach((c, index) => {
+            cTable.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${c.name}</td>
+                    <td>${c.phone}</td>
+                    <td>${c.balance.toFixed(2)}</td>
+                    <td class="no-print"><button class="btn btn-danger" onclick="deleteCustomer(${c.id})">حذف</button></td>
+                </tr>
+            `;
+
+            cSelect.innerHTML += `<option value="${c.id}" data-balance="${c.balance}">${c.name} (الرصيد السابق: ${c.balance})</option>`;
+        });
+    }
+
+    // Add Product
+    function addNewProduct() {
+        const name = document.getElementById('prodName').value.trim();
+        const qty = parseInt(document.getElementById('prodQty').value) || 0;
+        const price = parseFloat(document.getElementById('prodPrice').value) || 0;
+
+        if(!name) return alert('برجاء كتابة اسم المنتج');
+
+        products.push({ id: Date.now(), name, qty, price });
+        document.getElementById('prodName').value = '';
+        document.getElementById('prodQty').value = '';
+        document.getElementById('prodPrice').value = '';
+        
+        renderProducts();
+    }
+
+    function deleteProduct(id) {
+        products = products.filter(p => p.id !== id);
+        renderProducts();
+    }
+
+    // Add Customer
+    function addNewCustomer() {
+        const name = document.getElementById('custName').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        const balance = parseFloat(document.getElementById('custBalance').value) || 0;
+
+        if(!name) return alert('برجاء أدخل اسم العميل');
+
+        customers.push({ id: Date.now(), name, phone, balance });
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custBalance').value = '';
+
+        renderCustomers();
+    }
+
+    function deleteCustomer(id) {
+        customers = customers.filter(c => c.id !== id);
+        renderCustomers();
+    }
+
+    // Add Item to Invoice
+    function addItemToInvoice() {
+        const pId = parseInt(document.getElementById('invoiceProductSelect').value);
+        const qty = parseInt(document.getElementById('invoiceQty').value) || 1;
+
+        const product = products.find(p => p.id === pId);
+        if(!product) return alert('اختر منتجاً صحيحاً');
+
+        const existing = currentInvoiceItems.find(item => item.id === pId);
+        if(existing) {
+            existing.count += qty;
+        } else {
+            currentInvoiceItems.push({
+                id: product.id,
+                name: product.name,
+                available: product.qty,
+                price: product.price,
+                count: qty
+            });
+        }
+
+        renderInvoice();
+    }
+
+    // Remove Invoice Item
+    function removeInvoiceItem(index) {
+        currentInvoiceItems.splice(index, 1);
+        renderInvoice();
+    }
+
+    // Render Invoice Table & Calculation
+    function renderInvoice() {
+        const tbody = document.querySelector('#invoiceItemsTable tbody');
+        tbody.innerHTML = '';
+
+        let currentTotal = 0;
+
+        currentInvoiceItems.forEach((item, idx) => {
+            const itemTotal = item.count * item.price;
+            currentTotal += itemTotal;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.count}</td>
+                    <td>${item.name}</td>
+                    <td class="available-col">${item.available}</td>
+                    <td class="price-col">${item.price.toFixed(2)}</td>
+                    <td class="price-col">${itemTotal.toFixed(2)}</td>
+                    <td class="no-print">
+                        <button class="btn btn-danger" onclick="removeInvoiceItem(${idx})">إزالة</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('lblCurrBalance').innerText = currentTotal.toFixed(2);
+        applyCustomerBalance();
+    }
+
+    // Apply Customer Balance
+    function applyCustomerBalance() {
+        const select = document.getElementById('invoiceCustomerSelect');
         const selectedOption = select.options[select.selectedIndex];
         
-        const previousBalance = selectedOption.value ? parseFloat(selectedOption.getAttribute('data-balance')) : 0;
-        const currentBalance = parseFloat(document.getElementById('currentBalance').innerText);
-        
-        const grandTotal = previousBalance + currentBalance;
+        const prevBalance = parseFloat(selectedOption.getAttribute('data-balance')) || 0;
+        const currBalance = parseFloat(document.getElementById('lblCurrBalance').innerText) || 0;
+        const grandTotal = prevBalance + currBalance;
 
-        document.getElementById('previousBalance').innerText = previousBalance;
-        document.getElementById('grandTotal').innerText = grandTotal;
+        document.getElementById('lblPrevBalance').innerText = prevBalance.toFixed(2);
+        document.getElementById('lblGrandTotal').innerText = grandTotal.toFixed(2);
     }
 
-    // طباعة الفاتورة العادية للعميل
+    // Render Shortages Tab
+    function renderShortages() {
+        const tbody = document.getElementById('shortagesTableBody');
+        tbody.innerHTML = '';
+
+        const shortages = products.filter(p => p.qty <= 2);
+
+        shortages.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>1</td>
+                    <td>${p.name}</td>
+                    <td>${p.qty}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Print Standard Invoice
     function printStandardInvoice() {
-        document.body.classList.remove('print-shortages');
+        document.body.classList.remove('shortages-print-mode');
         window.print();
     }
 
-    // طباعة فاتورة النواقص (تخفي السعر واسم التاجر والمتاح)
+    // Print Shortages Invoice
     function printShortagesInvoice() {
-        document.body.classList.add('print-shortages');
+        document.body.classList.add('shortages-print-mode');
         window.print();
     }
+
+    // Init App
+    window.onload = function() {
+        renderProducts();
+        renderCustomers();
+    };
 </script>
 
 </body>
