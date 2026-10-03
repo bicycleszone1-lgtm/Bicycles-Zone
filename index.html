@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BICYCLES ZONE - نظام المبيعات والمخزن</title>
+  <title>BICYCLES ZONE - نظام المبيعات وإدارة المخزون</title>
   <style>
     :root {
       --bg-color: #0d0d0d;
@@ -32,7 +32,7 @@
     }
 
     .container {
-      max-width: 1300px;
+      max-width: 1350px;
       margin: 0 auto;
       background: var(--card-bg);
       padding: 25px;
@@ -55,15 +55,21 @@
     }
 
     header .phone {
-      font-size: 20px;
+      font-size: 18px;
       color: var(--text-muted);
       direction: ltr;
       display: inline-block;
       font-weight: bold;
       border: 1px solid var(--card-border);
-      padding: 4px 15px;
-      border-radius: 20px;
+      padding: 3px 12px;
+      border-radius: 15px;
       background: #000;
+      margin-bottom: 5px;
+    }
+
+    header .address {
+      font-size: 14px;
+      color: var(--text-muted);
     }
 
     /* التبويبات */
@@ -217,7 +223,7 @@
     tr:nth-child(even) { background: #111111; }
     tr:hover { background: #1a1a1a; }
 
-    /* قسم الدفع الآجل المخصص */
+    /* قسم الآجل والدفع المستقل */
     .credit-section {
       background: #000000;
       border: 1px solid var(--card-border);
@@ -285,8 +291,8 @@
       color: #000;
       padding: 30px;
       border-radius: 8px;
-      max-width: 650px;
-      width: 90%;
+      max-width: 700px;
+      width: 92%;
       max-height: 90vh;
       overflow-y: auto;
     }
@@ -298,16 +304,17 @@
   <header>
     <h1>BICYCLES ZONE</h1>
     <div class="phone">01067097867</div>
+    <div class="address">الرهاوي - مركز منشأة القناطر - محافظة الجيزة</div>
   </header>
 
   <!-- التبويبات -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('pos', event)">🛒 نقطة البيع (POS)</button>
-    <button class="tab-btn" onclick="switchTab('inventory', event)">📦 إدارة المخزن والبراني</button>
+    <button class="tab-btn active" onclick="switchTab('pos', event)">🛒 نقطة البيع والفواتير</button>
+    <button class="tab-btn" onclick="switchTab('inventory', event)">📦 إدارة المخزون والصناعية</button>
     <button class="tab-btn" onclick="switchTab('low-stock', event)">
-      ⚠️ النواقص <span class="badge" id="low-stock-count">0</span>
+      ⚠️ بيان النواقص <span class="badge" id="low-stock-count">0</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('invoices', event)">📑 سجل الفواتير والدفعات</button>
+    <button class="tab-btn" onclick="switchTab('invoices', event)">📑 سجل الفواتير والدفعات السابقة</button>
     <button class="tab-btn" onclick="switchTab('reports', event)">📊 التقارير المالية</button>
   </div>
 
@@ -315,16 +322,16 @@
   <div id="pos" class="tab-content active">
     <div class="form-row">
       <div class="form-group" style="flex: 2;">
-        <label>🔍 ابحث واختر الصنف مباشرة من هنا:</label>
-        <input type="text" id="pos-search-select" class="form-control" placeholder="اكتب اسم القطعة أو العجلة للبحث..." oninput="onSearchInput()" onfocus="onSearchInput()">
+        <label>🔍 البحث في المخزن والتقاط الصنف مباشرة:</label>
+        <input type="text" id="pos-search-select" class="form-control" placeholder="اكتب اسم الصنف للبحث المباشر..." oninput="onSearchInput()" onfocus="onSearchInput()">
         <select id="pos-item-select" class="form-control" size="4" style="display:none; margin-top:5px; position:absolute; z-index:10; background:#111;" onclick="selectItemFromList()"></select>
       </div>
 
       <div class="form-group">
-        <label>نوع السعر:</label>
+        <label>فئة السعر:</label>
         <select id="pos-price-type" class="form-control">
-          <option value="customer">زبون (قطاعي)</option>
-          <option value="worker">صنايعي (جملة)</option>
+          <option value="customer">سعر التجزئة (عميل)</option>
+          <option value="worker">سعر الجملة (صنايعي)</option>
         </select>
       </div>
       <div class="form-group">
@@ -345,11 +352,12 @@
       <table>
         <thead>
           <tr>
-            <th>الصنف / القطعة</th>
-            <th>نوع السعر</th>
-            <th>السعر الفردي</th>
+            <th>اسم الصنف</th>
+            <th>الوحدة</th>
+            <th>فئة السعر</th>
+            <th>سعر الوحدة</th>
             <th>الكمية</th>
-            <th>الشحن</th>
+            <th>مصاريف الشحن</th>
             <th>الإجمالي</th>
             <th>إجراء</th>
           </tr>
@@ -358,61 +366,83 @@
       </table>
     </div>
 
-    <!-- قسم الآجل والدفع المستقل -->
+    <!-- قسم حساب الفاتورة + حسابات الجملة والحساب القديم -->
     <div class="credit-section">
-      <h3>📜 حساب الفاتورة وبيانات الدفع (كاش / آجل)</h3>
+      <h3>📜 تسوية الفاتورة ورصيد العميل (مدين / دائن / عربون)</h3>
       <div class="form-row">
         <div class="form-group">
-          <label>اسم العميل:</label>
-          <input type="text" id="pos-customer-name" class="form-control" placeholder="اسم العميل">
+          <label>اسم العميل / المكان:</label>
+          <input type="text" id="pos-customer-name" class="form-control" placeholder="اسم العميل الرسمي">
         </div>
         <div class="form-group">
           <label>رقم الهاتف:</label>
           <input type="text" id="pos-customer-phone" class="form-control" placeholder="رقم الهاتف">
         </div>
+      </div>
+
+      <div class="form-row" style="background: #111; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
         <div class="form-group">
-          <label>المبلغ المدفوع (كاش):</label>
+          <label>الرصيد السابق للعميل (حساب قديم):</label>
+          <input type="number" id="pos-prev-balance" class="form-control" value="0" oninput="calculatePosRemaining()">
+        </div>
+        <div class="form-group">
+          <label>نوع الرصيد السابق:</label>
+          <select id="pos-prev-type" class="form-control" onchange="calculatePosRemaining()">
+            <option value="debit">مستحق على العميل (مدين)</option>
+            <option value="credit">مستحق للعميل (دائن / له عربون قديم)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المبلغ المدفوع حاداً / عربون الحساب:</label>
           <input type="number" id="pos-paid-amount" class="form-control" placeholder="0" oninput="calculatePosRemaining()">
         </div>
       </div>
 
       <div class="actions-bar" style="margin-top: 15px; margin-bottom: 0;">
         <div>
-          <h2 style="color: #fff;">المبلغ الكلي: <span id="pos-total-amount">0</span> ج.م</h2>
-          <h3 style="color: var(--status-red); margin-top: 5px;">المتبقي (الآجل): <span id="pos-remaining-amount">0</span> ج.م</h3>
-          <p style="margin-top: 5px; color: var(--text-muted);">نوع الفاتورة: <span id="pos-payment-type-label" class="payment-badge payment-cash">كاش بالكامل</span></p>
+          <h4 style="color: var(--text-muted);">إجمالي البضاعة الحالية: <span id="pos-current-total">0</span> ج.م</h4>
+          <h2 style="color: #fff; margin-top: 5px;">الإجمالي الكلي بالشامل: <span id="pos-total-amount">0</span> ج.م</h2>
+          <h3 style="color: var(--status-red); margin-top: 5px;">المتبقي المستحق (الآجل): <span id="pos-remaining-amount">0</span> ج.م</h3>
+          <p style="margin-top: 5px; color: var(--text-muted);">حالة التسديد: <span id="pos-payment-type-label" class="payment-badge payment-cash">كاش بالكامل</span></p>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-outline" onclick="previewCurrentCart()">👁️ معاينة الفاتورة</button>
-          <button class="btn" onclick="checkout()">💾 حفظ وطباعة الفاتورة</button>
+          <button class="btn btn-outline" onclick="previewCurrentCart()">👁️ معاينة الفاتورة الرسمية</button>
+          <button class="btn" onclick="checkout()">💾 حفظ وإصدار الفاتورة</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 2. إدارة المخزن والبراني -->
+  <!-- 2. إدارة المخزون -->
   <div id="inventory" class="tab-content">
-    <h3>إضافة / تعديل قطعة غيار أو عجلة بالمخزن</h3>
+    <h3>إضافة / تعديل صنف بالمخزون</h3>
     <div class="form-row" style="margin-top: 15px;">
       <input type="hidden" id="item-id">
       <div class="form-group">
-        <label>اسم الصنف / القطعة / العجلة:</label>
+        <label>اسم الصنف الرسمي:</label>
         <input type="text" id="item-name" class="form-control">
       </div>
       <div class="form-group">
         <label>اسم التاجر / المورد:</label>
-        <input type="text" id="item-supplier" class="form-control" placeholder="اسم التاجر الي جايب منه الشغل">
+        <input type="text" id="item-supplier" class="form-control" placeholder="اسم التاجر المورد">
+      </div>
+      <div class="form-group">
+        <label>وحدة القياس:</label>
+        <select id="item-unit" class="form-control">
+          <option value="قطعة">قطعة</option>
+          <option value="جوز">جوز</option>
+        </select>
       </div>
       <div class="form-group">
         <label>سعر التكلفة:</label>
         <input type="number" id="item-cost" class="form-control" min="0">
       </div>
       <div class="form-group">
-        <label>سعر الزبون (قطاعي):</label>
+        <label>سعر التجزئة (عميل):</label>
         <input type="number" id="item-price-customer" class="form-control" min="0">
       </div>
       <div class="form-group">
-        <label>سعر الصنايعي (جملة):</label>
+        <label>سعر الجملة (صنايعي):</label>
         <input type="number" id="item-price-worker" class="form-control" min="0">
       </div>
       <div class="form-group">
@@ -420,26 +450,28 @@
         <input type="number" id="item-qty" class="form-control" min="0">
       </div>
       <div class="form-group" style="align-self: flex-end;">
-        <button class="btn" onclick="saveItem()">💾 حفظ بالشغل</button>
+        <button class="btn" onclick="saveItem()">💾 حفظ في المخزن</button>
       </div>
     </div>
 
-    <!-- بحث بالجدول -->
-    <div class="form-group" style="margin-top: 20px;">
-      <input type="text" id="inv-search-input" class="form-control" placeholder="🔍 بحث في قائمة المخزن (باسم القطعة أو التاجر)..." oninput="renderInventory()">
+    <!-- شريط البحث المستقل الخاص بالمخزن -->
+    <div class="form-group" style="margin-top: 25px;">
+      <label>🔍 البحث الفوري في المخزن:</label>
+      <input type="text" id="inv-search-input" class="form-control" placeholder="ابحث باسم الصنف أو اسم التاجر أو الوحدة..." oninput="renderInventory()">
     </div>
 
     <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>اسم القطعة / العجلة</th>
+            <th># بند</th>
+            <th>اسم الصنف الرسمي</th>
             <th>التاجر / المورد</th>
+            <th>الوحدة</th>
             <th>التكلفة</th>
-            <th>سعر الزبون</th>
-            <th>سعر الصنايعي</th>
-            <th>المتبقي بالمخزن</th>
+            <th>سعر التجزئة</th>
+            <th>سعر الجملة</th>
+            <th>الرصيد بالمخزن</th>
             <th>إجراءات</th>
           </tr>
         </thead>
@@ -448,12 +480,12 @@
     </div>
   </div>
 
-  <!-- 3. النواقص -->
+  <!-- 3. بيان النواقص -->
   <div id="low-stock" class="tab-content">
     <div class="actions-bar">
-      <h3>قائمة الأصناف الناقصة (الكمية 2 أو أقل)</h3>
+      <h3>قائمة الأصناف الناقصة بالمخزون (الحد الحرِج: 2 فأقل)</h3>
       <div>
-        <button class="btn btn-outline" onclick="previewLowStock()">👁️ معاينة كشف النواقص</button>
+        <button class="btn btn-outline" onclick="previewLowStock()">👁️ معاينة بيان النواقص</button>
         <button class="btn" onclick="printLowStockInvoice()">🖨️ طباعة بيان النواقص للجرد</button>
       </div>
     </div>
@@ -462,11 +494,13 @@
       <table>
         <thead>
           <tr>
-            <th>اسم القطعة / العجلة</th>
-            <th>التاجر</th>
-            <th>الكمية المتبقية</th>
-            <th>سعر التكلفة</th>
-            <th>سعر القطاعي</th>
+            <th># بند</th>
+            <th>اسم الصنف الرسمي</th>
+            <th>التاجر المورد</th>
+            <th>الوحدة</th>
+            <th>الكمية المتاحة</th>
+            <th>سعر وحدة التكلفة</th>
+            <th>إجمالي التكلفة بالمخزن</th>
           </tr>
         </thead>
         <tbody id="low-stock-table-body"></tbody>
@@ -474,21 +508,21 @@
     </div>
   </div>
 
-  <!-- 4. سجل الفواتير والدفعات -->
+  <!-- 4. سجل الفواتير والدفعات السابقة -->
   <div id="invoices" class="tab-content">
-    <h3>سجل الفواتير والدفعات (كاش / آجل)</h3>
+    <h3>سجل الفواتير والدفعات المسجلة بالوقت والتاريخ</h3>
     <div class="table-container">
       <table>
         <thead>
           <tr>
             <th>رقم الفاتورة</th>
-            <th>التاريخ</th>
-            <th>اسم العميل</th>
+            <th>تاريخ ووقت التسجيل</th>
+            <th>اسم العميل الرسمي</th>
             <th>طريقة الدفع</th>
-            <th>المبلغ الكلي</th>
-            <th>المدفوع</th>
+            <th>إجمالي الفاتورة</th>
+            <th>المبلغ المدفوع</th>
             <th>المتبقي (الآجل)</th>
-            <th>إجراءات</th>
+            <th>إجراءات والتسديد</th>
           </tr>
         </thead>
         <tbody id="invoices-table-body"></tbody>
@@ -500,34 +534,34 @@
   <div id="reports" class="tab-content">
     <div class="stats-grid">
       <div class="stat-card">
-        <h4>إجمالي المبيعات الكلية</h4>
+        <h4>إجمالي المبيعات الرسمية</h4>
         <p id="stat-total-sales">0 ج.م</p>
       </div>
       <div class="stat-card">
-        <h4>إجمالي الأرباح</h4>
+        <h4>إجمالي الأرباح الصافية</h4>
         <p id="stat-total-profits">0 ج.م</p>
       </div>
       <div class="stat-card">
-        <h4>إجمالي الديون والآجل</h4>
+        <h4>إجمالي الديون والآجل المستحق</h4>
         <p id="stat-total-debts">0 ج.م</p>
       </div>
       <div class="stat-card">
-        <h4>قيمة البضاعة بالمخزن (تكلفة)</h4>
+        <h4>قيمة المخزون الحالي (سعر التكلفة)</h4>
         <p id="stat-inventory-value">0 ج.م</p>
       </div>
     </div>
 
     <div style="margin-top: 30px; border-top: 1px solid var(--card-border); padding-top: 20px;">
-      <h3 style="color: #fff; margin-bottom: 10px;">إدارة وتصفير الحسابات</h3>
+      <h3 style="color: #fff; margin-bottom: 10px;">إدارة وتصفير الحسابات المالية</h3>
       <div style="display: flex; gap: 15px; flex-wrap: wrap;">
         <button class="btn btn-outline" onclick="resetProfitsOnly()">💰 تصفير الأرباح فقط</button>
-        <button class="btn btn-danger" onclick="resetSalesAndProfits()">🗑️ تصفير المبيعات والأرباح والديون بالكامل</button>
+        <button class="btn btn-danger" onclick="resetSalesAndProfits()">🗑️ تصفير الحسابات والدفاتر بالكامل</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal للمعاينة -->
+<!-- Modal للمعاينة الرسمية -->
 <div id="previewModal" class="modal">
   <div class="modal-content">
     <div id="modalPrintArea"></div>
@@ -563,7 +597,7 @@
     renderReports();
   }
 
-  // --- البحث والاختيار المباشر بالـ POS ---
+  // --- البحث المباشر في نقطة البيع ---
   function onSearchInput() {
     const val = document.getElementById('pos-search-select').value.toLowerCase();
     const select = document.getElementById('pos-item-select');
@@ -576,7 +610,7 @@
       filtered.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
-        opt.textContent = `${item.name} | التاجر: ${item.supplier || 'غير محدد'} | المتاح: ${item.quantity}`;
+        opt.textContent = `${item.name} | [${item.unit || 'قطعة'}] | التاجر: ${item.supplier || 'غير محدد'} | المتاح: ${item.quantity}`;
         select.appendChild(opt);
       });
     } else {
@@ -596,13 +630,12 @@
 
   function addToCart() {
     if (!selectedItemId) {
-      // تجربة البحث المطابق بالاسم
       const nameVal = document.getElementById('pos-search-select').value.trim();
       const found = inventory.find(i => i.name.toLowerCase() === nameVal.toLowerCase());
       if (found) selectedItemId = found.id;
     }
 
-    if (!selectedItemId) { alert("يرجى اختيار صنف صحيح من قائمة البحث!"); return; }
+    if (!selectedItemId) { alert("يرجى تحديد صنف صحيح من القائمة!"); return; }
 
     const priceType = document.getElementById('pos-price-type').value;
     const qty = parseInt(document.getElementById('pos-qty').value) || 1;
@@ -623,7 +656,8 @@
       itemId: item.id,
       name: item.name,
       supplier: item.supplier || '-',
-      priceType: priceType === 'customer' ? 'قطاعي' : 'جملة',
+      unit: item.unit || 'قطعة',
+      priceType: priceType === 'customer' ? 'تجزئة' : 'جملة',
       unitPrice,
       cost: item.cost,
       qty,
@@ -631,7 +665,6 @@
       total: itemTotal
     });
 
-    // إعادة تعيين مدخلات البحث
     document.getElementById('pos-search-select').value = '';
     selectedItemId = null;
     renderCart();
@@ -647,6 +680,7 @@
       tbody.innerHTML += `
         <tr>
           <td><b>${c.name}</b></td>
+          <td>${c.unit}</td>
           <td>${c.priceType}</td>
           <td>${c.unitPrice} ج.م</td>
           <td>${c.qty}</td>
@@ -657,7 +691,7 @@
       `;
     });
 
-    document.getElementById('pos-total-amount').innerText = grandTotal;
+    document.getElementById('pos-current-total').innerText = grandTotal;
     calculatePosRemaining();
   }
 
@@ -667,15 +701,27 @@
   }
 
   function calculatePosRemaining() {
-    const total = parseFloat(document.getElementById('pos-total-amount').innerText) || 0;
+    const currentTotal = parseFloat(document.getElementById('pos-current-total').innerText) || 0;
+    const prevBalance = parseFloat(document.getElementById('pos-prev-balance').value) || 0;
+    const prevType = document.getElementById('pos-prev-type').value;
+    
+    let grandTotal = currentTotal;
+    if (prevType === 'debit') {
+      grandTotal += prevBalance;
+    } else {
+      grandTotal -= prevBalance;
+    }
+
+    document.getElementById('pos-total-amount').innerText = grandTotal;
+
     const paidInput = document.getElementById('pos-paid-amount').value;
-    const paid = paidInput === '' ? total : parseFloat(paidInput);
-    const remaining = total - paid;
+    const paid = paidInput === '' ? grandTotal : parseFloat(paidInput);
+    const remaining = grandTotal - paid;
 
     document.getElementById('pos-remaining-amount').innerText = remaining > 0 ? remaining : 0;
 
     const label = document.getElementById('pos-payment-type-label');
-    if (paid >= total) {
+    if (paid >= grandTotal) {
       label.className = 'payment-badge payment-cash';
       label.innerText = 'كاش بالكامل';
     } else if (paid === 0) {
@@ -683,25 +729,30 @@
       label.innerText = 'آجل بالكامل';
     } else {
       label.className = 'payment-badge payment-part';
-      label.innerText = 'جزء كاش والباقي آجل';
+      label.innerText = 'دفعة / جزء كاش والباقي آجل';
     }
   }
 
   function checkout() {
-    if (cart.length === 0) { alert("السلة فارغة!"); return; }
+    if (cart.length === 0) { alert("سلة الفاتورة فارغة!"); return; }
 
     const customerName = document.getElementById('pos-customer-name').value.trim() || 'عميل نقدي';
     const customerPhone = document.getElementById('pos-customer-phone').value.trim() || '-';
-    const total = parseFloat(document.getElementById('pos-total-amount').innerText);
+    
+    const currentTotal = parseFloat(document.getElementById('pos-current-total').innerText);
+    const prevBalance = parseFloat(document.getElementById('pos-prev-balance').value) || 0;
+    const prevType = document.getElementById('pos-prev-type').value;
+    const grandTotal = parseFloat(document.getElementById('pos-total-amount').innerText);
+
     const paidInput = document.getElementById('pos-paid-amount').value;
-    const paid = paidInput === '' ? total : parseFloat(paidInput);
-    const remaining = total - paid;
+    const paid = paidInput === '' ? grandTotal : parseFloat(paidInput);
+    const remaining = grandTotal - paid;
 
     let paymentType = 'كاش';
     if (paid === 0) paymentType = 'آجل';
-    else if (remaining > 0) paymentType = 'جزء كاش والباقي آجل';
+    else if (remaining > 0) paymentType = 'دفعة / آجل جزئي';
 
-    // خصم الكمية من المخزن
+    // خصم الكميات من المخزن
     cart.forEach(c => {
       const invItem = inventory.find(i => i.id == c.itemId);
       if (invItem) invItem.quantity -= c.qty;
@@ -710,65 +761,77 @@
     let totalProfit = 0;
     cart.forEach(c => { totalProfit += (c.unitPrice - c.cost) * c.qty; });
 
+    const now = new Date();
+    const timestampStr = now.toLocaleDateString('ar-EG') + ' - ' + now.toLocaleTimeString('ar-EG');
+
     const invoice = {
       id: Date.now(),
-      date: new Date().toLocaleDateString('ar-EG'),
+      date: timestampStr,
       customerName,
       customerPhone,
       items: [...cart],
-      total,
+      currentTotal,
+      prevBalance,
+      prevType,
+      total: grandTotal,
       paid,
       remaining: remaining > 0 ? remaining : 0,
       paymentType,
-      profit: totalProfit
+      profit: totalProfit,
+      paymentsHistory: [
+        { amount: paid, date: timestampStr, note: 'دفعة عند الفاتورة' }
+      ]
     };
 
     invoices.push(invoice);
     localStorage.setItem('invoices', JSON.stringify(invoices));
     localStorage.setItem('inventory', JSON.stringify(inventory));
 
-    alert("تم حفظ الفاتورة بنجاح!");
+    alert("تم تسجيل الفاتورة وحفظ الدفعة بالوقت والتاريخ بنجاح!");
     printCustomerInvoice(invoice);
 
     cart = [];
     document.getElementById('pos-customer-name').value = '';
     document.getElementById('pos-customer-phone').value = '';
+    document.getElementById('pos-prev-balance').value = '0';
     document.getElementById('pos-paid-amount').value = '';
     renderCart();
     updateAllViews();
   }
 
-  // --- إدارة المخزن مع اسم التاجر ---
+  // --- إدارة المخزن مع اختيار الوحدة والبحث المستقل ---
   function saveItem() {
     const id = document.getElementById('item-id').value;
     const name = document.getElementById('item-name').value.trim();
     const supplier = document.getElementById('item-supplier').value.trim() || 'غير محدد';
+    const unit = document.getElementById('item-unit').value;
     const cost = parseFloat(document.getElementById('item-cost').value) || 0;
     const priceCustomer = parseFloat(document.getElementById('item-price-customer').value) || 0;
     const priceWorker = parseFloat(document.getElementById('item-price-worker').value) || 0;
     const qty = parseInt(document.getElementById('item-qty').value) || 0;
 
-    if (!name) { alert("يرجى كتابة اسم القطعة أو العجلة!"); return; }
+    if (!name) { alert("يرجى إدخال اسم الصنف الرسمي!"); return; }
 
     if (id) {
       const index = inventory.findIndex(i => i.id == id);
       if (index !== -1) {
-        inventory[index] = { id: parseInt(id), name, supplier, cost, priceCustomer, priceWorker, quantity: qty };
+        inventory[index] = { id: parseInt(id), name, supplier, unit, cost, priceCustomer, priceWorker, quantity: qty };
       }
     } else {
-      inventory.push({ id: Date.now(), name, supplier, cost, priceCustomer, priceWorker, quantity: qty });
+      inventory.push({ id: Date.now(), name, supplier, unit, cost, priceCustomer, priceWorker, quantity: qty });
     }
 
     localStorage.setItem('inventory', JSON.stringify(inventory));
     resetItemForm();
     updateAllViews();
-    alert("تم حفظ الشغل بنجاح!");
+    alert("تم حفظ الصنف بالمخزون بنجاح!");
   }
 
   function resetItemForm() {
     document.getElementById('item-id').value = '';
     document.getElementById('item-name').value = '';
     document.getElementById('item-supplier').value = '';
+    document.getElementById('item-unit').value = 'قطعة';
     document.getElementById('item-cost').value = '';
     document.getElementById('item-price-customer').value = '';
     document.getElementById('item-price-worker').value = '';
@@ -781,6 +844,7 @@
       document.getElementById('item-id').value = item.id;
       document.getElementById('item-name').value = item.name;
       document.getElementById('item-supplier').value = item.supplier || '';
+      document.getElementById('item-unit').value = item.unit || 'قطعة';
       document.getElementById('item-cost').value = item.cost;
       document.getElementById('item-price-customer').value = item.priceCustomer;
       document.getElementById('item-price-worker').value = item.priceWorker;
@@ -789,7 +853,7 @@
   }
 
   function deleteItem(id) {
-    if (confirm("هل تريد حذف هذا الصنف من المخزن؟")) {
+    if (confirm("هل أنت تأكد من مسح الصنف من المخزن؟")) {
       inventory = inventory.filter(i => i.id != id);
       localStorage.setItem('inventory', JSON.stringify(inventory));
       updateAllViews();
@@ -802,15 +866,18 @@
     tbody.innerHTML = '';
 
     const filtered = inventory.filter(i => 
-      i.name.toLowerCase().includes(search) || (i.supplier && i.supplier.toLowerCase().includes(search))
+      i.name.toLowerCase().includes(search) || 
+      (i.supplier && i.supplier.toLowerCase().includes(search)) ||
+      (i.unit && i.unit.toLowerCase().includes(search))
     );
 
     filtered.forEach((item, index) => {
       tbody.innerHTML += `
         <tr>
-          <td>${index + 1}</td>
+          <td><b>بند ${index + 1}</b></td>
           <td><b>${item.name}</b></td>
           <td>${item.supplier || '-'}</td>
+          <td>${item.unit || 'قطعة'}</td>
           <td>${item.cost} ج.م</td>
           <td>${item.priceCustomer} ج.م</td>
           <td>${item.priceWorker} ج.م</td>
@@ -824,81 +891,119 @@
     });
   }
 
-  // --- النواقص ---
+  // --- بيان النواقص مع تتابع الأبناء والوحدات والحساب الكلي ---
   function renderLowStock() {
     const lowStockItems = inventory.filter(i => i.quantity <= 2);
     document.getElementById('low-stock-count').innerText = lowStockItems.length;
 
     const tbody = document.getElementById('low-stock-table-body');
     tbody.innerHTML = '';
-    lowStockItems.forEach(item => {
+    lowStockItems.forEach((item, index) => {
+      const totalCost = item.cost * item.quantity;
       tbody.innerHTML += `
         <tr>
+          <td><b>بند ${index + 1}</b></td>
           <td><b>${item.name}</b></td>
           <td>${item.supplier || '-'}</td>
+          <td>${item.unit || 'قطعة'}</td>
           <td style="color: var(--status-red); font-weight: bold;">${item.quantity}</td>
           <td>${item.cost} ج.م</td>
-          <td>${item.priceCustomer} ج.م</td>
+          <td>${totalCost} ج.م</td>
         </tr>
       `;
     });
   }
 
-  // --- المعاينات والطباعة ---
-  function getInvoiceHTML(inv) {
+  // --- معاينة الفواتير الرسمية وإظهار اسم ورقم وعنوان المكان ---
+  function getHeaderHTML() {
     return `
       <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
-        <h1 style="margin:0;">BICYCLES ZONE</h1>
-        <p style="margin:5px 0; font-weight:bold;">📱 01067097867</p>
+        <h1 style="margin:0; font-size:26px; font-weight:bold;">BICYCLES ZONE</h1>
+        <p style="margin:3px 0; font-size:16px; font-weight:bold;">📱 01067097867</p>
+        <p style="margin:2px 0; font-size:13px;">الرهاوي - مركز منشأة القناطر - محافظة الجيزة</p>
       </div>
-      <p><b>رقم الفاتورة:</b> #${inv.id || 'معاينة'}</p>
-      <p><b>التاريخ:</b> ${inv.date || new Date().toLocaleDateString('ar-EG')}</p>
-      <p><b>العميل:</b> ${inv.customerName} | <b>الهاتف:</b> ${inv.customerPhone}</p>
-      <p><b>طريقة الدفع:</b> ${inv.paymentType}</p>
-      <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+    `;
+  }
+
+  function getInvoiceHTML(inv) {
+    return `
+      ${getHeaderHTML()}
+      <div style="display:flex; justify-between; margin-bottom:10px;">
+        <div>
+          <p><b>رقم الفاتورة:</b> #${inv.id || 'معاينة'}</p>
+          <p><b>العميل الرسمي:</b> ${inv.customerName}</p>
+          <p><b>رقم الهاتف:</b> ${inv.customerPhone}</p>
+        </div>
+        <div style="text-align:left;">
+          <p><b>التاريخ والوقت:</b> ${inv.date || new Date().toLocaleString('ar-EG')}</p>
+          <p><b>حالة الدفع:</b> ${inv.paymentType}</p>
+        </div>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; margin-top:10px;">
         <thead>
           <tr style="background:#eee;">
-            <th style="border:1px solid #000; padding:8px;">الصنف / القطعة</th>
-            <th style="border:1px solid #000; padding:8px;">الكمية</th>
-            <th style="border:1px solid #000; padding:8px;">السعر</th>
-            <th style="border:1px solid #000; padding:8px;">الشحن</th>
-            <th style="border:1px solid #000; padding:8px;">الإجمالي</th>
+            <th style="border:1px solid #000; padding:6px;"># بند</th>
+            <th style="border:1px solid #000; padding:6px;">اسم الصنف الرسمي</th>
+            <th style="border:1px solid #000; padding:6px;">الوحدة</th>
+            <th style="border:1px solid #000; padding:6px;">الكمية</th>
+            <th style="border:1px solid #000; padding:6px;">السعر</th>
+            <th style="border:1px solid #000; padding:6px;">الإجمالي</th>
           </tr>
         </thead>
         <tbody>
-          ${inv.items.map(i => `
+          ${inv.items.map((i, idx) => `
             <tr>
-              <td style="border:1px solid #000; padding:8px;">${i.name}</td>
-              <td style="border:1px solid #000; padding:8px; text-align:center;">${i.qty}</td>
-              <td style="border:1px solid #000; padding:8px; text-align:center;">${i.unitPrice}</td>
-              <td style="border:1px solid #000; padding:8px; text-align:center;">${i.shipping}</td>
-              <td style="border:1px solid #000; padding:8px; text-align:center;">${i.total}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">بند ${idx + 1}</td>
+              <td style="border:1px solid #000; padding:6px;">${i.name}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${i.unit || 'قطعة'}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${i.qty}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${i.unitPrice}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${i.total}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
-      <h3 style="margin-top:15px;">المبلغ الكلي: ${inv.total} ج.م</h3>
-      <h4>المدفوع: ${inv.paid} ج.م</h4>
-      <h4>المتبقي (الآجل): ${inv.remaining} ج.م</h4>
+
+      <div style="margin-top:15px; border-top:1px solid #ccc; padding-top:10px;">
+        <p><b>إجمالي البضاعة الحالية:</b> ${inv.currentTotal || inv.total} ج.م</p>
+        ${inv.prevBalance ? `<p><b>الرصيد السابق (${inv.prevType === 'debit' ? 'مدين / مستحق' : 'دائن / له عربون'}):</b> ${inv.prevBalance} ج.م</p>` : ''}
+        <h3>إجمالي المبلغ الكلي بالشامل: ${inv.total} ج.م</h3>
+        <h4>المبلغ المدفوع: ${inv.paid} ج.م</h4>
+        <h4 style="color:${inv.remaining > 0 ? 'red' : 'green'};">المتبقي المستحق (آجل): ${inv.remaining} ج.م</h4>
+      </div>
+
+      ${inv.paymentsHistory && inv.paymentsHistory.length > 0 ? `
+        <div style="margin-top:15px; background:#f9f9f9; padding:10px; border:1px solid #ddd;">
+          <p style="font-weight:bold; margin-bottom:5px;">سجل حركة الدفعات والتحصيل بالوقت والتاريخ:</p>
+          ${inv.paymentsHistory.map(p => `<p style="font-size:12px; margin:2px 0;">• تم دفع ${p.amount} ج.م بتاريخ (${p.date}) [${p.note || 'دفعة'}]</p>`).join('')}
+        </div>
+      ` : ''}
     `;
   }
 
   function previewCurrentCart() {
-    if (cart.length === 0) { alert("السلة فارغة للمعاينة!"); return; }
-    const total = parseFloat(document.getElementById('pos-total-amount').innerText);
+    if (cart.length === 0) { alert("سلة الفاتورة فارغة للمعاينة!"); return; }
+    
+    const currentTotal = parseFloat(document.getElementById('pos-current-total').innerText);
+    const prevBalance = parseFloat(document.getElementById('pos-prev-balance').value) || 0;
+    const prevType = document.getElementById('pos-prev-type').value;
+    const grandTotal = parseFloat(document.getElementById('pos-total-amount').innerText);
+
     const paidInput = document.getElementById('pos-paid-amount').value;
-    const paid = paidInput === '' ? total : parseFloat(paidInput);
-    const remaining = total - paid;
+    const paid = paidInput === '' ? grandTotal : parseFloat(paidInput);
+    const remaining = grandTotal - paid;
 
     let paymentType = 'كاش';
     if (paid === 0) paymentType = 'آجل';
-    else if (remaining > 0) paymentType = 'جزء كاش والباقي آجل';
+    else if (remaining > 0) paymentType = 'دفعة / آجل جزئي';
 
     const tempInvoice = {
       customerName: document.getElementById('pos-customer-name').value || 'عميل نقدي',
       customerPhone: document.getElementById('pos-customer-phone').value || '-',
       items: cart,
-      total, paid, remaining, paymentType
+      currentTotal, prevBalance, prevType,
+      total: grandTotal, paid, remaining, paymentType
     };
 
     document.getElementById('modalPrintArea').innerHTML = getInvoiceHTML(tempInvoice);
@@ -908,27 +1013,30 @@
   function previewLowStock() {
     const lowStockItems = inventory.filter(item => item.quantity <= 2);
     let html = `
-      <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px;">
-        <h2>BICYCLES ZONE</h2>
-        <p>📱 01067097867</p>
-        <h3>كشف بيان النواقص للجرد</h3>
-      </div>
-      <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+      ${getHeaderHTML()}
+      <h3 style="text-align:center; margin-bottom:15px;">كشف النواقص الرسمي والجرد الفعلي</h3>
+      <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:#eee;">
-            <th style="border:1px solid #000; padding:8px;">#</th>
-            <th style="border:1px solid #000; padding:8px;">اسم القطعة / العجلة</th>
-            <th style="border:1px solid #000; padding:8px;">التاجر</th>
-            <th style="border:1px solid #000; padding:8px;">الكمية المطلوبة (يدوي)</th>
+            <th style="border:1px solid #000; padding:6px;"># بند</th>
+            <th style="border:1px solid #000; padding:6px;">اسم الصنف الرسمي</th>
+            <th style="border:1px solid #000; padding:6px;">التاجر</th>
+            <th style="border:1px solid #000; padding:6px;">الوحدة</th>
+            <th style="border:1px solid #000; padding:6px;">المتاح</th>
+            <th style="border:1px solid #000; padding:6px;">سعر وحدة التكلفة</th>
+            <th style="border:1px solid #000; padding:6px;">إجمالي التكلفة</th>
           </tr>
         </thead>
         <tbody>
           ${lowStockItems.map((item, index) => `
             <tr>
-              <td style="border:1px solid #000; padding:8px; text-align:center;">${index + 1}</td>
-              <td style="border:1px solid #000; padding:8px;"><b>${item.name}</b></td>
-              <td style="border:1px solid #000; padding:8px;">${item.supplier || '-'}</td>
-              <td style="border:1px solid #000; padding:15px;"></td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">بند ${index + 1}</td>
+              <td style="border:1px solid #000; padding:6px;"><b>${item.name}</b></td>
+              <td style="border:1px solid #000; padding:6px;">${item.supplier || '-'}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${item.unit || 'قطعة'}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${item.quantity}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${item.cost}</td>
+              <td style="border:1px solid #000; padding:6px; text-align:center;">${item.cost * item.quantity}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -946,7 +1054,7 @@
     let printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html lang="ar" dir="rtl">
-      <head><title>طباعة</title></head>
+      <head><title>طباعة رسمية - BICYCLES ZONE</title></head>
       <body onload="window.print(); window.close();">
         ${document.getElementById('modalPrintArea').innerHTML}
       </body>
@@ -973,7 +1081,7 @@
     printModalArea();
   }
 
-  // --- الفواتير والتقارير ---
+  // --- الفواتير والتحصيل مع التاريخ والوقت دقيق جداً ---
   function renderInvoices() {
     const tbody = document.getElementById('invoices-table-body');
     tbody.innerHTML = '';
@@ -981,15 +1089,15 @@
       tbody.innerHTML += `
         <tr>
           <td>#${inv.id}</td>
-          <td>${inv.date}</td>
-          <td>${inv.customerName} (${inv.customerPhone})</td>
+          <td><small>${inv.date}</small></td>
+          <td><b>${inv.customerName}</b><br><small>${inv.customerPhone}</small></td>
           <td><span class="payment-badge">${inv.paymentType || 'كاش'}</span></td>
           <td>${inv.total} ج.م</td>
           <td>${inv.paid} ج.م</td>
           <td style="color: ${inv.remaining > 0 ? 'var(--status-red)' : 'var(--status-green)'}; font-weight: bold;">${inv.remaining} ج.م</td>
           <td>
             <button class="btn btn-outline" style="padding: 4px 10px;" onclick='printCustomerInvoice(${JSON.stringify(inv)})'>🖨 طباعة</button>
-            ${inv.remaining > 0 ? `<button class="btn" style="padding: 4px 10px;" onclick="payDebt(${inv.id})">💵 تحصيل دين</button>` : ''}
+            ${inv.remaining > 0 ? `<button class="btn" style="padding: 4px 10px;" onclick="payDebt(${inv.id})">💵 دفع عربون / تحصيل</button>` : ''}
           </td>
         </tr>
       `;
@@ -1000,18 +1108,24 @@
     const inv = invoices.find(i => i.id == invoiceId);
     if (!inv) return;
 
-    const amount = parseFloat(prompt(`المتبقي على العميل: ${inv.remaining} ج.م\nأدخل المبلغ المدفوع حالياً:`));
+    const amount = parseFloat(prompt(`المتبقي الآجل على العميل (${inv.customerName}): ${inv.remaining} ج.م\nأدخل المبلغ الدفعة المستلم حالياً:`));
     if (amount && amount > 0) {
       inv.paid += amount;
       inv.remaining = inv.total - inv.paid;
       if (inv.remaining < 0) inv.remaining = 0;
 
-      if (inv.remaining === 0) inv.paymentType = 'كاش بالكامل (سداد آجل)';
-      else inv.paymentType = 'جزء كاش والباقي آجل';
+      if (inv.remaining === 0) inv.paymentType = 'كاش بالكامل (سداد كامل)';
+      else inv.paymentType = 'دفعة / آجل جزئي';
+
+      const now = new Date();
+      const timestampStr = now.toLocaleDateString('ar-EG') + ' - ' + now.toLocaleTimeString('ar-EG');
+      
+      if (!inv.paymentsHistory) inv.paymentsHistory = [];
+      inv.paymentsHistory.push({ amount, date: timestampStr, note: 'تحصيل دفعة آجل' });
 
       localStorage.setItem('invoices', JSON.stringify(invoices));
       updateAllViews();
-      alert("تم تحصيل المبلغ وتحديث الفاتورة!");
+      alert(`تم تسجيل المبلغ (${amount} ج.م) بتاريخ وساعة التسجيل بنجاح!`);
     }
   }
 
@@ -1053,11 +1167,11 @@
       localStorage.setItem('invoices', JSON.stringify(invoices));
       localStorage.setItem('customProfitReduction', customProfitReduction);
       updateAllViews();
-      alert("تم تصفير الحسابات المجمعة بنجاح!");
+      alert("تم تصفير الحسابات الرسمية والدفاتر بنجاح!");
     }
   }
 
-  // تشغيل النظام
+  // تشغيل النظام وتحديث البيانات عند التحميل
   updateAllViews();
 </script>
 
