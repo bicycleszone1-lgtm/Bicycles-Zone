@@ -159,29 +159,33 @@
             </div>
         </section>
 
-        <!-- 2. قسم النواقص -->
+        <!-- 2. قسم النواقص (المعدل) -->
         <section id="tab-shortages" class="space-y-6 hidden">
             <div class="dark-card p-5 rounded-lg space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-neutral-800 pb-4">
                     <div>
                         <h2 class="text-md font-bold text-white">قسم النواقص وطباعة الفواتير</h2>
-                        <p class="text-xs text-neutral-400 mt-1">حصر البضائع الناقصة وإدراج حساب الآجل للتاجر</p>
+                        <p class="text-xs text-neutral-400 mt-1">حصر البضائع الناقصة وتحديد الكميات والإجماليات يدويًا للكشف</p>
                     </div>
                     <button onclick="previewShortageInvoice()" class="px-5 py-2 bg-white text-black font-bold text-xs rounded">معاينة وطباعة الفاتورة</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800 text-xs">
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">تصفية باسم التاجر</label>
+                        <label class="block text-xs text-neutral-400 mb-1">تصفية باسم التاجر (للمستند الداخلي)</label>
                         <input type="text" id="shortage-supplier-filter" oninput="renderShortages()" placeholder="اسم التاجر..." class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق للتاجر (الآجل)</label>
-                        <input type="number" step="0.01" id="shortage-prev-balance" value="0" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
+                        <label class="block text-xs text-neutral-400 mb-1">إجمالي الفاتورة (يدوي)</label>
+                        <input type="number" step="0.01" id="shortage-manual-total" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق (يدوي)</label>
+                        <input type="number" step="0.01" id="shortage-prev-balance" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
                         <label class="block text-xs text-neutral-400 mb-1">سداد جزء من الحساب</label>
-                        <input type="number" step="0.01" id="shortage-paid-amount" value="0" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
+                        <input type="number" step="0.01" id="shortage-paid-amount" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                 </div>
 
@@ -192,9 +196,8 @@
                                 <th class="p-3">تحديد</th>
                                 <th class="p-3">اسم الصنف</th>
                                 <th class="p-3">الكمية بالمخزن</th>
-                                <th class="p-3">الكمية المطلوبة</th>
-                                <th class="p-3">سعر الوحدة</th>
-                                <th class="p-3">الإجمالي</th>
+                                <th class="p-3">الكمية المطلوبة (يدوي)</th>
+                                <th class="p-3">الإجمالي (يدوي)</th>
                             </tr>
                         </thead>
                         <tbody id="shortages-table-body" class="divide-y divide-neutral-900"></tbody>
@@ -202,10 +205,10 @@
                 </div>
 
                 <div class="flex flex-col md:flex-row justify-between items-center bg-neutral-950 p-4 rounded border border-neutral-800 text-xs gap-2">
-                    <div>إجمالي فاتورة النواقص: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
+                    <div>إجمالي الفاتورة: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>الرصيد السابق: <span id="shortage-prev-display" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>سداد جزء: <span id="shortage-paid-display" class="font-bold text-white">0.00</span> ج.م</div>
-                    <div class="text-sm font-bold">الرصيد الحالي للتاجر: <span id="shortage-final-balance" class="text-white">0.00</span> ج.م</div>
+                    <div class="text-sm font-bold">الرصيد الحالي: <span id="shortage-final-balance" class="text-white">0.00</span> ج.م</div>
                 </div>
             </div>
         </section>
@@ -286,7 +289,7 @@
             </div>
         </section>
 
-        <!-- 4. قسم الأرباح والمالية (الجديد) -->
+        <!-- 4. قسم الأرباح والمالية -->
         <section id="tab-profits" class="space-y-6 hidden">
             <!-- كروت ملخص رأس المال والبضاعة بالمخزن -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -399,24 +402,16 @@
                     <div id="modal-invoice-type" class="inline-block border border-black px-3 py-0.5 text-xs font-bold mt-2"></div>
                 </div>
 
-                <!-- بيانات العميل أو التاجر -->
+                <!-- بيانات العميل فقط إن وجدت -->
                 <div id="modal-client-info" class="mb-3 text-xs font-bold space-y-1"></div>
 
-                <!-- الجدول الرسمي (شباك - كمية - صنف - سعر - إجمالي) -->
+                <!-- الجدول المطبوع للمعاينة -->
                 <table class="w-full text-right text-xs print-table border-collapse mb-3">
-                    <thead>
-                        <tr class="bg-neutral-100 border border-black">
-                            <th class="p-2 border border-black text-center w-10">#</th>
-                            <th class="p-2 border border-black text-center w-16">الكمية</th>
-                            <th class="p-2 border border-black">اسم الصنف</th>
-                            <th class="p-2 border border-black text-center w-24">سعر الوحدة</th>
-                            <th class="p-2 border border-black text-center w-24">الإجمالي</th>
-                        </tr>
-                    </thead>
+                    <thead id="modal-table-head"></thead>
                     <tbody id="modal-table-body"></tbody>
                 </table>
 
-                <!-- التذييل الرسمي (إجمالي - رصيد سابق - رصيد حالي) -->
+                <!-- التذييل الرسمى -->
                 <div class="border-t-2 border-black pt-2 space-y-1 text-xs font-bold">
                     <div class="flex justify-between">
                         <span>إجمالي الفاتورة:</span>
@@ -547,7 +542,7 @@
             });
         }
 
-        // --- 2. النواقص ---
+        // --- 2. قسم النواقص (المعدل كلياً) ---
         function renderShortages() {
             const supplierFilter = document.getElementById('shortage-supplier-filter').value.trim().toLowerCase();
             const tbody = document.getElementById('shortages-table-body');
@@ -561,12 +556,11 @@
             shortageItems.forEach((item) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-3"><input type="checkbox" checked class="shortage-checkbox dark-input" data-id="${item.id}" onchange="updateShortageTotals()"></td>
+                        <td class="p-3"><input type="checkbox" checked class="shortage-checkbox dark-input" data-id="${item.id}"></td>
                         <td class="p-3 font-bold text-white">${item.name}</td>
                         <td class="p-3 text-red-400 font-bold">${item.qty}</td>
-                        <td class="p-3"><input type="number" value="1" min="1" id="shortage-req-qty-${item.id}" oninput="updateShortageTotals()" class="dark-input w-20 p-1 text-center rounded text-sm"></td>
-                        <td class="p-3"><input type="number" step="0.01" value="${item.cost}" id="shortage-price-${item.id}" oninput="updateShortageTotals()" class="dark-input w-24 p-1 text-center rounded text-sm"></td>
-                        <td class="p-3 font-bold text-white" id="shortage-item-total-${item.id}">${item.cost.toFixed(2)}</td>
+                        <td class="p-3"><input type="number" value="1" min="1" id="shortage-req-qty-${item.id}" class="dark-input w-24 p-1 text-center rounded text-sm"></td>
+                        <td class="p-3"><input type="number" step="0.01" value="0.00" id="shortage-manual-line-${item.id}" class="dark-input w-28 p-1 text-center rounded text-sm font-bold"></td>
                     </tr>
                 `;
             });
@@ -575,24 +569,7 @@
         }
 
         function updateShortageTotals() {
-            let orderTotal = 0;
-            const checkboxes = document.querySelectorAll('.shortage-checkbox');
-
-            checkboxes.forEach(cb => {
-                const id = cb.getAttribute('data-id');
-                const reqQty = parseFloat(document.getElementById(`shortage-req-qty-${id}`)?.value) || 0;
-                const unitPrice = parseFloat(document.getElementById(`shortage-price-${id}`)?.value) || 0;
-                const total = reqQty * unitPrice;
-
-                if(document.getElementById(`shortage-item-total-${id}`)) {
-                    document.getElementById(`shortage-item-total-${id}`).innerText = total.toFixed(2);
-                }
-
-                if(cb.checked) {
-                    orderTotal += total;
-                }
-            });
-
+            const orderTotal = parseFloat(document.getElementById('shortage-manual-total').value) || 0;
             const prevBalance = parseFloat(document.getElementById('shortage-prev-balance').value) || 0;
             const paidAmount = parseFloat(document.getElementById('shortage-paid-amount').value) || 0;
             const finalBalance = (orderTotal + prevBalance) - paidAmount;
@@ -604,7 +581,6 @@
         }
 
         function previewShortageInvoice() {
-            const supplier = document.getElementById('shortage-supplier-filter').value.trim() || 'عام';
             const checkboxes = document.querySelectorAll('.shortage-checkbox:checked');
             
             if(checkboxes.length === 0) {
@@ -612,33 +588,41 @@
                 return;
             }
 
-            document.getElementById('modal-invoice-type').innerText = "النواقص";
-            document.getElementById('modal-client-info').innerHTML = `<div>التاجر / المورد: <span class="font-normal">${supplier}</span></div>`;
+            document.getElementById('modal-invoice-type').innerText = "كشف النواقص المطلوبة";
+            // تم إلغاء خانة اسم التاجر تماماً
+            document.getElementById('modal-client-info').innerHTML = '';
+
+            // تصميم هيدر الجدول بدون "سعر الوحدة"
+            document.getElementById('modal-table-head').innerHTML = `
+                <tr class="bg-neutral-100 border border-black">
+                    <th class="p-2 border border-black text-center w-10">#</th>
+                    <th class="p-2 border border-black text-center w-20">الكمية</th>
+                    <th class="p-2 border border-black">اسم الصنف</th>
+                    <th class="p-2 border border-black text-center w-28">الإجمالي</th>
+                </tr>
+            `;
 
             const tbody = document.getElementById('modal-table-body');
             tbody.innerHTML = '';
             let index = 1;
-            let orderTotal = 0;
 
             checkboxes.forEach(cb => {
                 const id = cb.getAttribute('data-id');
                 const item = inventory.find(i => i.id === parseInt(id));
                 const qty = parseFloat(document.getElementById(`shortage-req-qty-${id}`).value) || 0;
-                const unitPrice = parseFloat(document.getElementById(`shortage-price-${id}`).value) || 0;
-                const lineTotal = qty * unitPrice;
-                orderTotal += lineTotal;
+                const lineTotal = parseFloat(document.getElementById(`shortage-manual-line-${id}`).value) || 0;
 
                 tbody.innerHTML += `
                     <tr>
                         <td class="p-2 border border-black text-center font-bold">${index++}</td>
                         <td class="p-2 border border-black text-center font-bold">${qty}</td>
                         <td class="p-2 border border-black font-bold">${item.name}</td>
-                        <td class="p-2 border border-black text-center">${unitPrice.toFixed(2)}</td>
-                        <td class="p-2 border border-black text-center font-bold">${lineTotal.toFixed(2)}</td>
+                        <td class="p-2 border border-black text-center font-bold">${lineTotal > 0 ? lineTotal.toFixed(2) : '-'}</td>
                     </tr>
                 `;
             });
 
+            const orderTotal = parseFloat(document.getElementById('shortage-manual-total').value) || 0;
             const prevBalance = parseFloat(document.getElementById('shortage-prev-balance').value) || 0;
             const paidAmount = parseFloat(document.getElementById('shortage-paid-amount').value) || 0;
             const finalBalance = (orderTotal + prevBalance) - paidAmount;
@@ -780,6 +764,16 @@
                 <div>الهاتف: <span class="font-normal">${customerPhone}</span></div>
             `;
 
+            document.getElementById('modal-table-head').innerHTML = `
+                <tr class="bg-neutral-100 border border-black">
+                    <th class="p-2 border border-black text-center w-10">#</th>
+                    <th class="p-2 border border-black text-center w-16">الكمية</th>
+                    <th class="p-2 border border-black">اسم الصنف</th>
+                    <th class="p-2 border border-black text-center w-24">سعر الوحدة</th>
+                    <th class="p-2 border border-black text-center w-24">الإجمالي</th>
+                </tr>
+            `;
+
             const tbody = document.getElementById('modal-table-body');
             tbody.innerHTML = '';
             let cartTotal = 0;
@@ -812,7 +806,6 @@
 
         // --- 4. الأرباح والمالية ---
         function renderProfits() {
-            // 1. حسابات قيمة المخزن الشاملة
             let totalCost = 0;
             let totalCustomerValue = 0;
             let totalWholesaleValue = 0;
@@ -830,7 +823,6 @@
             document.getElementById('stat-inventory-wholesale').innerText = totalWholesaleValue.toFixed(2) + ' ج.م';
             document.getElementById('stat-inventory-profit').innerText = expectedProfit.toFixed(2) + ' ج.م';
 
-            // 2. حسابات حركة الأرباح الفعلية المنجزة
             let netSales = 0;
             let netProfit = 0;
 
@@ -845,7 +837,6 @@
             document.getElementById('stat-net-profit').innerText = netProfit.toFixed(2) + ' ج.م';
             document.getElementById('stat-net-loss').innerText = netLoss.toFixed(2) + ' ج.م';
 
-            // 3. عرض جدول الحركة والتاريخ
             const tbody = document.getElementById('profits-table-body');
             tbody.innerHTML = '';
 
@@ -863,7 +854,6 @@
             });
         }
 
-        // أزرار تصفير البيانات
         function resetProfitsLog() {
             if(confirm('هل أنت تأكد من تصفير وإعادة ضبط سجل الأرباح والمبيعات بالكامل؟')) {
                 salesLog = [];
@@ -936,7 +926,6 @@
                 let totalSaleAmount = 0;
                 let totalCostAmount = 0;
 
-                // خصم الكميات المتاحة وحساب الربح الصافي
                 saleCart.forEach(cartItem => {
                     const invItem = inventory.find(i => i.id === cartItem.itemId);
                     if(invItem) {
@@ -948,7 +937,6 @@
 
                 localStorage.setItem('bz_inventory', JSON.stringify(inventory));
 
-                // تسجيل الفاتورة في الأرباح
                 const profit = totalSaleAmount - totalCostAmount;
                 const customerName = document.getElementById('sale-customer-name').value.trim() || 'عميل نقدي';
 
@@ -972,7 +960,6 @@
 
                 localStorage.setItem('bz_sales_log', JSON.stringify(salesLog));
 
-                // تحديث وسجل ديون العملاء
                 const customerPhone = document.getElementById('sale-customer-phone').value.trim();
                 const remaining = parseFloat(document.getElementById('sale-remaining-balance').value) || 0;
 
@@ -993,7 +980,6 @@
                     localStorage.setItem('bz_debts', JSON.stringify(debts));
                 }
 
-                // تفريغ الفاتورة
                 saleCart = [];
                 document.getElementById('sale-customer-name').value = '';
                 document.getElementById('sale-customer-phone').value = '';
