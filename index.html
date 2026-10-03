@@ -159,33 +159,30 @@
             </div>
         </section>
 
-        <!-- 2. قسم النواقص (المعدل) -->
+        <!-- 2. قسم النواقص (كتابة يدوية بالكامل) -->
         <section id="tab-shortages" class="space-y-6 hidden">
             <div class="dark-card p-5 rounded-lg space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-neutral-800 pb-4">
                     <div>
-                        <h2 class="text-md font-bold text-white">قسم النواقص وطباعة الفواتير</h2>
-                        <p class="text-xs text-neutral-400 mt-1">حصر البضائع الناقصة وتحديد الكميات والإجماليات يدويًا للكشف</p>
+                        <h2 class="text-md font-bold text-white">قسم النواقص وطباعة الكشف</h2>
+                        <p class="text-xs text-neutral-400 mt-1">كتابة الكميات والأسباب والأسعار والإجماليات يدويًا بالكامل للكشف</p>
                     </div>
-                    <button onclick="previewShortageInvoice()" class="px-5 py-2 bg-white text-black font-bold text-xs rounded">معاينة وطباعة الفاتورة</button>
+                    <button onclick="previewShortageInvoice()" class="px-5 py-2 bg-white text-black font-bold text-xs rounded">معاينة وطباعة الكشف</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800 text-xs">
+                <!-- مدخلات الحساب الإجمالي اليدوية -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800 text-xs">
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">تصفية باسم التاجر (للمستند الداخلي)</label>
-                        <input type="text" id="shortage-supplier-filter" oninput="renderShortages()" placeholder="اسم التاجر..." class="dark-input w-full p-2 text-sm rounded">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-neutral-400 mb-1">إجمالي الفاتورة (يدوي)</label>
-                        <input type="number" step="0.01" id="shortage-manual-total" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded font-bold">
+                        <label class="block text-xs text-neutral-400 mb-1">إجمالي الفاتورة الكلي (يدوي)</label>
+                        <input type="number" step="0.01" id="shortage-manual-total" placeholder="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded font-bold">
                     </div>
                     <div>
                         <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق (يدوي)</label>
-                        <input type="number" step="0.01" id="shortage-prev-balance" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
+                        <input type="number" step="0.01" id="shortage-prev-balance" placeholder="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">سداد جزء من الحساب</label>
-                        <input type="number" step="0.01" id="shortage-paid-amount" value="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
+                        <label class="block text-xs text-neutral-400 mb-1">سداد جزء (يدوي)</label>
+                        <input type="number" step="0.01" id="shortage-paid-amount" placeholder="0.00" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                 </div>
 
@@ -193,11 +190,11 @@
                     <table class="w-full text-right text-sm">
                         <thead class="bg-neutral-900 text-neutral-400 border-b border-neutral-800">
                             <tr>
-                                <th class="p-3">تحديد</th>
+                                <th class="p-3 w-12">تحديد</th>
                                 <th class="p-3">اسم الصنف</th>
-                                <th class="p-3">الكمية بالمخزن</th>
-                                <th class="p-3">الكمية المطلوبة (يدوي)</th>
-                                <th class="p-3">الإجمالي (يدوي)</th>
+                                <th class="p-3 w-28">الكمية (يدوي)</th>
+                                <th class="p-3 w-32">السعر (يدوي)</th>
+                                <th class="p-3 w-32">الإجمالي (يدوي)</th>
                             </tr>
                         </thead>
                         <tbody id="shortages-table-body" class="divide-y divide-neutral-900"></tbody>
@@ -205,7 +202,7 @@
                 </div>
 
                 <div class="flex flex-col md:flex-row justify-between items-center bg-neutral-950 p-4 rounded border border-neutral-800 text-xs gap-2">
-                    <div>إجمالي الفاتورة: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
+                    <div>إجمالي الكشف: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>الرصيد السابق: <span id="shortage-prev-display" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>سداد جزء: <span id="shortage-paid-display" class="font-bold text-white">0.00</span> ج.م</div>
                     <div class="text-sm font-bold">الرصيد الحالي: <span id="shortage-final-balance" class="text-white">0.00</span> ج.م</div>
@@ -388,11 +385,11 @@
     <div id="invoice-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-neutral-950 border border-neutral-800 w-full max-w-2xl rounded-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-neutral-800 pb-3 no-print">
-                <h3 class="text-sm font-bold text-white">معاينة الفاتورة قبل الطباعة</h3>
+                <h3 class="text-sm font-bold text-white">معاينة المستند قبل الطباعة</h3>
                 <button onclick="closeModal()" class="text-neutral-400 hover:text-white font-bold text-sm">إغلاق ✕</button>
             </div>
 
-            <!-- الفاتورة الرسمية المطبوعة -->
+            <!-- الفاتورة / المستند الرسمي المطبوع -->
             <div id="printSection" class="bg-white text-black p-6 border-2 border-black">
                 <!-- الهيدر المنظم -->
                 <div class="text-center border-b-2 border-black pb-3 mb-3">
@@ -411,10 +408,10 @@
                     <tbody id="modal-table-body"></tbody>
                 </table>
 
-                <!-- التذييل الرسمى -->
+                <!-- التذييل الرسمي -->
                 <div class="border-t-2 border-black pt-2 space-y-1 text-xs font-bold">
                     <div class="flex justify-between">
-                        <span>إجمالي الفاتورة:</span>
+                        <span>إجمالي المستند:</span>
                         <span id="modal-total-amount">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between">
@@ -542,25 +539,29 @@
             });
         }
 
-        // --- 2. قسم النواقص (المعدل كلياً) ---
+        // --- 2. قسم النواقص (يدوي بالكامل) ---
         function renderShortages() {
-            const supplierFilter = document.getElementById('shortage-supplier-filter').value.trim().toLowerCase();
             const tbody = document.getElementById('shortages-table-body');
             tbody.innerHTML = '';
 
-            const shortageItems = inventory.filter(i => {
-                const matchesSupplier = supplierFilter === '' || i.supplier.toLowerCase().includes(supplierFilter);
-                return matchesSupplier && i.qty <= 3;
-            });
+            // حصر النواقص بالمخزن (الكميات المقاربة للنفاذ)
+            const shortageItems = inventory.filter(i => i.qty <= 3);
+
+            if(shortageItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-neutral-500">لا توجد أصناف ناقصة بالمخزن حالياً</td></tr>`;
+                return;
+            }
 
             shortageItems.forEach((item) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-3"><input type="checkbox" checked class="shortage-checkbox dark-input" data-id="${item.id}"></td>
-                        <td class="p-3 font-bold text-white">${item.name}</td>
-                        <td class="p-3 text-red-400 font-bold">${item.qty}</td>
-                        <td class="p-3"><input type="number" value="1" min="1" id="shortage-req-qty-${item.id}" class="dark-input w-24 p-1 text-center rounded text-sm"></td>
-                        <td class="p-3"><input type="number" step="0.01" value="0.00" id="shortage-manual-line-${item.id}" class="dark-input w-28 p-1 text-center rounded text-sm font-bold"></td>
+                        <td class="p-3 text-center"><input type="checkbox" checked class="shortage-checkbox dark-input" data-id="${item.id}"></td>
+                        <td class="p-3 font-bold text-white">
+                            <input type="text" value="${item.name}" id="shortage-name-${item.id}" class="dark-input w-full p-1 text-sm rounded">
+                        </td>
+                        <td class="p-3"><input type="number" placeholder="الكمية" id="shortage-req-qty-${item.id}" class="dark-input w-full p-1 text-center rounded text-sm font-bold"></td>
+                        <td class="p-3"><input type="number" step="0.01" placeholder="السعر" id="shortage-price-${item.id}" class="dark-input w-full p-1 text-center rounded text-sm"></td>
+                        <td class="p-3"><input type="number" step="0.01" placeholder="الإجمالي" id="shortage-manual-line-${item.id}" class="dark-input w-full p-1 text-center rounded text-sm font-bold text-white"></td>
                     </tr>
                 `;
             });
@@ -588,16 +589,16 @@
                 return;
             }
 
-            document.getElementById('modal-invoice-type').innerText = "كشف النواقص المطلوبة";
-            // تم إلغاء خانة اسم التاجر تماماً
+            document.getElementById('modal-invoice-type').innerText = "كشف النواقص والطلبات";
             document.getElementById('modal-client-info').innerHTML = '';
 
-            // تصميم هيدر الجدول بدون "سعر الوحدة"
+            // تصميم جدول المعاينة بدون أسعار افتراضية
             document.getElementById('modal-table-head').innerHTML = `
                 <tr class="bg-neutral-100 border border-black">
                     <th class="p-2 border border-black text-center w-10">#</th>
-                    <th class="p-2 border border-black text-center w-20">الكمية</th>
                     <th class="p-2 border border-black">اسم الصنف</th>
+                    <th class="p-2 border border-black text-center w-20">الكمية</th>
+                    <th class="p-2 border border-black text-center w-24">السعر</th>
                     <th class="p-2 border border-black text-center w-28">الإجمالي</th>
                 </tr>
             `;
@@ -608,15 +609,17 @@
 
             checkboxes.forEach(cb => {
                 const id = cb.getAttribute('data-id');
-                const item = inventory.find(i => i.id === parseInt(id));
-                const qty = parseFloat(document.getElementById(`shortage-req-qty-${id}`).value) || 0;
+                const nameInput = document.getElementById(`shortage-name-${id}`).value;
+                const qtyVal = document.getElementById(`shortage-req-qty-${id}`).value;
+                const priceVal = parseFloat(document.getElementById(`shortage-price-${id}`).value) || 0;
                 const lineTotal = parseFloat(document.getElementById(`shortage-manual-line-${id}`).value) || 0;
 
                 tbody.innerHTML += `
                     <tr>
                         <td class="p-2 border border-black text-center font-bold">${index++}</td>
-                        <td class="p-2 border border-black text-center font-bold">${qty}</td>
-                        <td class="p-2 border border-black font-bold">${item.name}</td>
+                        <td class="p-2 border border-black font-bold">${nameInput}</td>
+                        <td class="p-2 border border-black text-center font-bold">${qtyVal !== '' ? qtyVal : '-'}</td>
+                        <td class="p-2 border border-black text-center">${priceVal > 0 ? priceVal.toFixed(2) : '-'}</td>
                         <td class="p-2 border border-black text-center font-bold">${lineTotal > 0 ? lineTotal.toFixed(2) : '-'}</td>
                     </tr>
                 `;
