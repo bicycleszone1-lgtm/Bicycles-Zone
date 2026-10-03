@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bicycles Zone - نظام الإدارة والمخازن</title>
+    <title>Bicycles Zone - نظام إدارة المخزن والمبيعات</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
         
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: #0d0d0d;
+            background-color: #000000;
             color: #e5e5e5;
         }
 
         .dark-card {
-            background-color: #141414;
+            background-color: #0d0d0d;
             border: 1px solid #262626;
         }
 
         .dark-input {
-            background-color: #0a0a0a;
+            background-color: #000000;
             border: 1px solid #333333;
             color: #ffffff;
         }
 
         .dark-input:focus {
-            border-color: #666666;
+            border-color: #888888;
             outline: none;
+        }
+
+        .nav-btn {
+            background-color: #000000;
+            color: #a3a3a3;
+            border: 1px solid #262626;
         }
 
         .nav-btn.active {
             background-color: #ffffff;
             color: #000000;
             font-weight: bold;
+            border-color: #ffffff;
         }
 
         @media print {
@@ -50,47 +57,49 @@
                 width: 100%;
                 background-color: #ffffff !important;
                 color: #000000 !important;
-                padding: 20px;
+                padding: 15px;
             }
             .no-print {
                 display: none !important;
             }
-            .print-border {
-                border: 1px solid #000000 !important;
+            .print-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
             }
             .print-table th, .print-table td {
                 border: 1px solid #000000 !important;
                 color: #000000 !important;
                 padding: 6px 8px !important;
+                font-size: 12px !important;
             }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Header -->
+    <!-- Header الرئيسي -->
     <header class="bg-black border-b border-neutral-800 p-4 no-print">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-center md:text-right">
-                <h1 class="text-2xl font-black text-white tracking-wider">BICYCLES ZONE</h1>
+                <h1 class="text-2xl font-black text-white tracking-wider">Bicycles Zone</h1>
                 <p class="text-xs text-neutral-400 mt-1">الرهاوي منشأة الجيزة | هاتف: 01067097867</p>
             </div>
             <nav class="flex flex-wrap justify-center gap-2">
-                <button onclick="switchTab('inventory')" id="btn-inventory" class="nav-btn active px-4 py-2 text-sm rounded border border-neutral-700 transition">المخزن</button>
-                <button onclick="switchTab('shortages')" id="btn-shortages" class="nav-btn px-4 py-2 text-sm rounded border border-neutral-700 transition">النواقص</button>
-                <button onclick="switchTab('sales')" id="btn-sales" class="nav-btn px-4 py-2 text-sm rounded border border-neutral-700 transition">فاتورة بيع</button>
-                <button onclick="switchTab('debts')" id="btn-debts" class="nav-btn px-4 py-2 text-sm rounded border border-neutral-700 transition">سجل الديون</button>
+                <button onclick="switchTab('inventory')" id="btn-inventory" class="nav-btn active px-4 py-2 text-sm rounded transition">المخزن</button>
+                <button onclick="switchTab('shortages')" id="btn-shortages" class="nav-btn px-4 py-2 text-sm rounded transition">قسم النواقص</button>
+                <button onclick="switchTab('sales')" id="btn-sales" class="nav-btn px-4 py-2 text-sm rounded transition">فاتورة البيع</button>
+                <button onclick="switchTab('debts')" id="btn-debts" class="nav-btn px-4 py-2 text-sm rounded transition">سجل الديون</button>
             </nav>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- المحتوى الرئيسي -->
     <main class="max-w-7xl mx-auto p-4 flex-1 w-full no-print">
 
-        <!-- 1. المخزن -->
+        <!-- 1. قسم المخزن -->
         <section id="tab-inventory" class="space-y-6">
             <div class="dark-card p-5 rounded-lg">
-                <h2 class="text-lg font-bold mb-4 text-white border-b border-neutral-800 pb-2" id="form-title">إضافة صنف جديد للمخزن</h2>
+                <h2 class="text-md font-bold mb-4 text-white border-b border-neutral-800 pb-2" id="form-title">إضافة صنف جديد للمخزن</h2>
                 <form id="inventory-form" onsubmit="saveItem(event)" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <input type="hidden" id="item-id">
                     <div>
@@ -118,16 +127,16 @@
                         <input type="text" id="item-supplier" required class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div class="md:col-span-3 lg:col-span-6 flex gap-2 justify-end mt-2">
-                        <button type="button" onclick="resetForm()" class="px-4 py-2 text-sm bg-neutral-800 text-neutral-300 rounded hover:bg-neutral-700">إلغاء</button>
-                        <button type="submit" class="px-6 py-2 text-sm bg-white text-black font-bold rounded hover:bg-neutral-200">حفظ الصنف</button>
+                        <button type="button" onclick="resetForm()" class="px-4 py-2 text-xs bg-neutral-900 text-neutral-300 rounded border border-neutral-800">إلغاء</button>
+                        <button type="submit" class="px-6 py-2 text-xs bg-white text-black font-bold rounded">حفظ الصنف</button>
                     </div>
                 </form>
             </div>
 
             <div class="dark-card p-5 rounded-lg space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h2 class="text-lg font-bold text-white">جدول المخزن</h2>
-                    <input type="text" id="search-inventory" oninput="renderInventory()" placeholder="بحث باسم الصنف أو التاجر..." class="dark-input px-3 py-2 text-sm rounded w-full md:w-64">
+                    <h2 class="text-md font-bold text-white">جدول المخزن</h2>
+                    <input type="text" id="search-inventory" oninput="renderInventory()" placeholder="بحث باسم الصنف أو اسم التاجر..." class="dark-input px-3 py-2 text-sm rounded w-full md:w-64">
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-sm">
@@ -135,38 +144,38 @@
                             <tr>
                                 <th class="p-3">#</th>
                                 <th class="p-3">اسم الصنف</th>
-                                <th class="p-3">سعر الشراء</th>
-                                <th class="p-3">سعر الزبون</th>
-                                <th class="p-3">سعر العجلات</th>
+                                <th class="p-3">السعر عليا</th>
+                                <th class="p-3">السعر للزبون</th>
+                                <th class="p-3">السعر للعجلات</th>
                                 <th class="p-3">الكمية</th>
                                 <th class="p-3">اسم التاجر</th>
-                                <th class="p-3 text-center">الإجراء</th>
+                                <th class="p-3 text-center">التعديل</th>
                             </tr>
                         </thead>
-                        <tbody id="inventory-table-body" class="divide-y divide-neutral-800"></tbody>
+                        <tbody id="inventory-table-body" class="divide-y divide-neutral-900"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- 2. النواقص -->
+        <!-- 2. قسم النواقص -->
         <section id="tab-shortages" class="space-y-6 hidden">
             <div class="dark-card p-5 rounded-lg space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-neutral-800 pb-4">
                     <div>
-                        <h2 class="text-lg font-bold text-white">قائمة النواقص وحساب التاجر</h2>
-                        <p class="text-xs text-neutral-400 mt-1">تحديد الكميات المطلوبة وإعداد فاتورة الطلبية</p>
+                        <h2 class="text-md font-bold text-white">قسم النواقص وطباعة الفواتير</h2>
+                        <p class="text-xs text-neutral-400 mt-1">حصر البضائع الناقصة وإدراج حساب الآجل للتاجر</p>
                     </div>
-                    <button onclick="previewShortageInvoice()" class="px-5 py-2 bg-white text-black font-bold text-sm rounded hover:bg-neutral-200">معاينة وطباعة الفاتورة</button>
+                    <button onclick="previewShortageInvoice()" class="px-5 py-2 bg-white text-black font-bold text-xs rounded">معاينة وطباعة الفاتورة</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-900 p-4 rounded border border-neutral-800">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800">
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">اسم التاجر المستهدف</label>
-                        <input type="text" id="shortage-supplier-filter" oninput="renderShortages()" placeholder="اكتب اسم التاجر..." class="dark-input w-full p-2 text-sm rounded">
+                        <label class="block text-xs text-neutral-400 mb-1">تصفية باسم التاجر</label>
+                        <input type="text" id="shortage-supplier-filter" oninput="renderShortages()" placeholder="اسم التاجر..." class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق للتاجر (دَيْن عليّ)</label>
+                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق للتاجر (الآجل)</label>
                         <input type="number" step="0.01" id="shortage-prev-balance" value="0" oninput="updateShortageTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
@@ -181,29 +190,29 @@
                             <tr>
                                 <th class="p-3">تحديد</th>
                                 <th class="p-3">اسم الصنف</th>
-                                <th class="p-3">المخزون الحالي</th>
+                                <th class="p-3">الكمية بالمخزن</th>
                                 <th class="p-3">الكمية المطلوبة</th>
                                 <th class="p-3">سعر الوحدة</th>
                                 <th class="p-3">الإجمالي</th>
                             </tr>
                         </thead>
-                        <tbody id="shortages-table-body" class="divide-y divide-neutral-800"></tbody>
+                        <tbody id="shortages-table-body" class="divide-y divide-neutral-900"></tbody>
                     </table>
                 </div>
 
-                <div class="flex flex-col md:flex-row justify-between items-center bg-neutral-900 p-4 rounded border border-neutral-800 text-sm gap-2">
-                    <div>إجمالي الطلبية الحالية: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
+                <div class="flex flex-col md:flex-row justify-between items-center bg-neutral-950 p-4 rounded border border-neutral-800 text-xs gap-2">
+                    <div>إجمالي فاتورة النواقص: <span id="shortage-order-total" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>الرصيد السابق: <span id="shortage-prev-display" class="font-bold text-white">0.00</span> ج.م</div>
                     <div>سداد جزء: <span id="shortage-paid-display" class="font-bold text-white">0.00</span> ج.م</div>
-                    <div class="text-base font-bold">الرصيد الحالي المتبقي للتاجر: <span id="shortage-final-balance" class="text-white">0.00</span> ج.م</div>
+                    <div class="text-sm font-bold">الرصيد الحالي للتاجر: <span id="shortage-final-balance" class="text-white">0.00</span> ج.م</div>
                 </div>
             </div>
         </section>
 
-        <!-- 3. فاتورة البيع -->
+        <!-- 3. قسم فاتورة البيع -->
         <section id="tab-sales" class="space-y-6 hidden">
             <div class="dark-card p-5 rounded-lg space-y-4">
-                <h2 class="text-lg font-bold text-white border-b border-neutral-800 pb-2">إصدار فاتورة مبيعات جديدة</h2>
+                <h2 class="text-md font-bold text-white border-b border-neutral-800 pb-2">إصدار فاتورة بيع جديدة</h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -211,11 +220,11 @@
                         <input type="text" id="sale-customer-name" onchange="checkCustomerDebt()" placeholder="اسم العميل" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">رقم الهاتف</label>
-                        <input type="text" id="sale-customer-phone" onchange="checkCustomerDebt()" placeholder="رقم الهاتف" class="dark-input w-full p-2 text-sm rounded">
+                        <label class="block text-xs text-neutral-400 mb-1">رقم الموبايل</label>
+                        <input type="text" id="sale-customer-phone" onchange="checkCustomerDebt()" placeholder="رقم الموبايل" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">تسعير الفاتورة (خيار داخلي)</label>
+                        <label class="block text-xs text-neutral-400 mb-1">نوع التسعير (خاص بك فقط)</label>
                         <select id="sale-price-type" onchange="updateSaleCartPrices()" class="dark-input w-full p-2 text-sm rounded">
                             <option value="customer">سعر الزبون (قطاعي)</option>
                             <option value="wholesale">سعر العجلات (جملة)</option>
@@ -223,17 +232,17 @@
                     </div>
                 </div>
 
-                <!-- البحث والتناول -->
-                <div class="bg-neutral-900 p-4 rounded border border-neutral-800 space-y-3">
-                    <label class="block text-xs text-neutral-400">إضافة صنف للفاتورة</label>
+                <!-- البحث واستدعاء الاصناف -->
+                <div class="bg-neutral-950 p-4 rounded border border-neutral-800 space-y-2">
+                    <label class="block text-xs text-neutral-400">البحث واستدعاء الأصناف للفاتورة</label>
                     <div class="flex flex-col md:flex-row gap-2">
                         <input type="text" id="sale-item-search" oninput="searchSaleItems()" placeholder="ابحث باسم الصنف..." class="dark-input flex-1 p-2 text-sm rounded">
                         <select id="sale-item-select" class="dark-input flex-1 p-2 text-sm rounded"></select>
-                        <button onclick="addItemToSaleCart()" class="px-5 py-2 bg-neutral-800 text-white text-sm rounded hover:bg-neutral-700">إضافة للفاتورة</button>
+                        <button onclick="addItemToSaleCart()" class="px-5 py-2 bg-neutral-800 text-white text-xs rounded hover:bg-neutral-700">إضافة للفاتورة</button>
                     </div>
                 </div>
 
-                <!-- سلة الفاتورة -->
+                <!-- جدول الفاتورة -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-sm">
                         <thead class="bg-neutral-900 text-neutral-400 border-b border-neutral-800">
@@ -243,21 +252,21 @@
                                 <th class="p-3">الكمية</th>
                                 <th class="p-3">سعر الوحدة</th>
                                 <th class="p-3">الإجمالي</th>
-                                <th class="p-3 text-center">إزالة</th>
+                                <th class="p-3 text-center">حذف</th>
                             </tr>
                         </thead>
-                        <tbody id="sales-cart-body" class="divide-y divide-neutral-800"></tbody>
+                        <tbody id="sales-cart-body" class="divide-y divide-neutral-900"></tbody>
                     </table>
                 </div>
 
-                <!-- المبالغ والآجل -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-neutral-900 p-4 rounded border border-neutral-800 text-sm">
+                <!-- الديون والمبالغ -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-neutral-950 p-4 rounded border border-neutral-800 text-xs">
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">إجمالي الاصناف</label>
+                        <label class="block text-xs text-neutral-400 mb-1">إجمالي الفاتورة الحالية</label>
                         <input type="number" readonly id="sale-cart-total" value="0.00" class="dark-input w-full p-2 text-sm rounded font-bold">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق (آجل قديم)</label>
+                        <label class="block text-xs text-neutral-400 mb-1">الرصيد السابق (آجل سابق)</label>
                         <input type="number" step="0.01" id="sale-prev-balance" value="0.00" oninput="calculateSaleTotals()" class="dark-input w-full p-2 text-sm rounded">
                     </div>
                     <div>
@@ -270,17 +279,17 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2">
-                    <button onclick="previewSaleInvoice()" class="px-6 py-2 bg-white text-black font-bold text-sm rounded hover:bg-neutral-200">معاينة وطباعة الفاتورة</button>
+                <div class="flex justify-end">
+                    <button onclick="previewSaleInvoice()" class="px-6 py-2 bg-white text-black font-bold text-xs rounded">معاينة وطباعة الفاتورة</button>
                 </div>
             </div>
         </section>
 
-        <!-- 4. سجل الديون -->
+        <!-- 4. قسم سجل الديون -->
         <section id="tab-debts" class="space-y-6 hidden">
             <div class="dark-card p-5 rounded-lg space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-neutral-800 pb-4">
-                    <h2 class="text-lg font-bold text-white">سجل ديون العملاء</h2>
+                    <h2 class="text-md font-bold text-white">سجل ديون العملاء</h2>
                     <input type="text" id="search-debts" oninput="renderDebts()" placeholder="بحث باسم العميل أو الهاتف..." class="dark-input px-3 py-2 text-sm rounded w-full md:w-64">
                 </div>
                 <div class="overflow-x-auto">
@@ -289,12 +298,12 @@
                             <tr>
                                 <th class="p-3">#</th>
                                 <th class="p-3">اسم العميل</th>
-                                <th class="p-3">رقم الهاتف</th>
+                                <th class="p-3">رقم الموبايل</th>
                                 <th class="p-3">إجمالي الدين الحالي</th>
                                 <th class="p-3 text-center">سداد جزء</th>
                             </tr>
                         </thead>
-                        <tbody id="debts-table-body" class="divide-y divide-neutral-800"></tbody>
+                        <tbody id="debts-table-body" class="divide-y divide-neutral-900"></tbody>
                     </table>
                 </div>
             </div>
@@ -302,43 +311,43 @@
 
     </main>
 
-    <!-- Modal المعاينة والطباعة -->
-    <div id="invoice-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-neutral-900 border border-neutral-700 w-full max-w-2xl rounded-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <!-- Modal معاينة وطباعة الفاتورة -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-neutral-950 border border-neutral-800 w-full max-w-2xl rounded-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-neutral-800 pb-3 no-print">
-                <h3 class="text-md font-bold text-white">معاينة الفاتورة قبل الطباعة</h3>
-                <button onclick="closeModal()" class="text-neutral-400 hover:text-white font-bold">إغلاق ✕</button>
+                <h3 class="text-sm font-bold text-white">معاينة الفاتورة قبل الطباعة</h3>
+                <button onclick="closeModal()" class="text-neutral-400 hover:text-white font-bold text-sm">إغلاق ✕</button>
             </div>
 
-            <!-- الورقة القابلة للطباعة -->
-            <div id="printSection" class="bg-white text-black p-6 rounded shadow border border-black">
+            <!-- الفاتورة الرسمية المطبوعة -->
+            <div id="printSection" class="bg-white text-black p-6 border-2 border-black">
                 <!-- الهيدر المنظم -->
-                <div class="text-center border-b-2 border-black pb-4 mb-4">
-                    <h2 class="text-2xl font-black tracking-widest uppercase">BICYCLES ZONE</h2>
-                    <p class="text-sm font-bold mt-1">الرهاوي منشأة الجيزة</p>
-                    <p class="text-sm font-bold">هاتف: 01067097867</p>
-                    <div id="modal-invoice-type" class="inline-block border border-black px-4 py-1 text-xs font-bold mt-2 uppercase"></div>
+                <div class="text-center border-b-2 border-black pb-3 mb-3">
+                    <h2 class="text-2xl font-black tracking-wider uppercase">Bicycles Zone</h2>
+                    <p class="text-xs font-bold mt-1">الرهاوي منشأة الجيزة</p>
+                    <p class="text-xs font-bold">موبايل: 01067097867</p>
+                    <div id="modal-invoice-type" class="inline-block border border-black px-3 py-0.5 text-xs font-bold mt-2"></div>
                 </div>
 
-                <!-- بيانات العميل / التاجر -->
-                <div id="modal-client-info" class="mb-4 text-xs font-bold space-y-1"></div>
+                <!-- بيانات العميل أو التاجر -->
+                <div id="modal-client-info" class="mb-3 text-xs font-bold space-y-1"></div>
 
-                <!-- جدول الفاتورة -->
-                <table class="w-full text-right text-xs print-table border-collapse mb-4">
+                <!-- الجدول الرسمي (شباك - كمية - صنف - سعر - إجمالي) -->
+                <table class="w-full text-right text-xs print-table border-collapse mb-3">
                     <thead>
-                        <tr class="bg-neutral-100 border-b border-black">
-                            <th class="p-2 border border-black w-12 text-center">#</th>
-                            <th class="p-2 border border-black w-20 text-center">الكمية</th>
+                        <tr class="bg-neutral-100 border border-black">
+                            <th class="p-2 border border-black text-center w-10">#</th>
+                            <th class="p-2 border border-black text-center w-16">الكمية</th>
                             <th class="p-2 border border-black">اسم الصنف</th>
-                            <th class="p-2 border border-black w-24 text-center">سعر الوحدة</th>
-                            <th class="p-2 border border-black w-24 text-center">الإجمالي</th>
+                            <th class="p-2 border border-black text-center w-24">سعر الوحدة</th>
+                            <th class="p-2 border border-black text-center w-24">الإجمالي</th>
                         </tr>
                     </thead>
                     <tbody id="modal-table-body"></tbody>
                 </table>
 
-                <!-- تذييل المبالغ -->
-                <div class="border-t-2 border-black pt-3 space-y-1 text-xs font-bold">
+                <!-- التذييل الرسمي (إجمالي - رصيد سابق - رصيد حالي) -->
+                <div class="border-t-2 border-black pt-2 space-y-1 text-xs font-bold">
                     <div class="flex justify-between">
                         <span>إجمالي الفاتورة:</span>
                         <span id="modal-total-amount">0.00 ج.م</span>
@@ -348,27 +357,26 @@
                         <span id="modal-prev-balance">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between border-t border-black pt-1 text-sm font-black">
-                        <span>الرصيد الحالي المتبقي:</span>
+                        <span>الرصيد الحالي:</span>
                         <span id="modal-final-balance">0.00 ج.م</span>
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 border-t border-neutral-800 pt-3 no-print">
-                <button onclick="closeModal()" class="px-4 py-2 text-xs bg-neutral-800 text-neutral-300 rounded">إلغاء</button>
+                <button onclick="closeModal()" class="px-4 py-2 text-xs bg-neutral-900 text-neutral-300 rounded border border-neutral-800">إلغاء</button>
                 <button onclick="executePrint()" class="px-6 py-2 text-xs bg-white text-black font-bold rounded">تأكيد وحفظ وطباعة</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Data Structures
+        // قواعد البيانات المحلية
         let inventory = JSON.parse(localStorage.getItem('bz_inventory')) || [];
         let debts = JSON.parse(localStorage.getItem('bz_debts')) || [];
         let saleCart = [];
         let currentModalAction = null;
 
-        // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
             renderInventory();
             renderShortages();
@@ -376,7 +384,7 @@
             renderDebts();
         });
 
-        // Tab Navigation
+        // التنقل بين الأقسام
         function switchTab(tab) {
             ['inventory', 'shortages', 'sales', 'debts'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
@@ -474,7 +482,7 @@
                 return matchesSupplier && i.qty <= 3;
             });
 
-            shortageItems.forEach((item, index) => {
+            shortageItems.forEach((item) => {
                 tbody.innerHTML += `
                     <tr>
                         <td class="p-3"><input type="checkbox" checked class="shortage-checkbox dark-input" data-id="${item.id}" onchange="updateShortageTotals()"></td>
@@ -520,7 +528,7 @@
         }
 
         function previewShortageInvoice() {
-            const supplier = document.getElementById('shortage-supplier-filter').value || 'عام';
+            const supplier = document.getElementById('shortage-supplier-filter').value.trim() || 'عام';
             const checkboxes = document.querySelectorAll('.shortage-checkbox:checked');
             
             if(checkboxes.length === 0) {
@@ -528,7 +536,7 @@
                 return;
             }
 
-            document.getElementById('modal-invoice-type').innerText = "فاتورة النواقص";
+            document.getElementById('modal-invoice-type').innerText = "النواقص";
             document.getElementById('modal-client-info').innerHTML = `<div>التاجر / المورد: <span class="font-normal">${supplier}</span></div>`;
 
             const tbody = document.getElementById('modal-table-body');
@@ -546,11 +554,11 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-2 border border-black text-center">${index++}</td>
-                        <td class="p-2 border border-black text-center">${qty}</td>
+                        <td class="p-2 border border-black text-center font-bold">${index++}</td>
+                        <td class="p-2 border border-black text-center font-bold">${qty}</td>
                         <td class="p-2 border border-black font-bold">${item.name}</td>
                         <td class="p-2 border border-black text-center">${unitPrice.toFixed(2)}</td>
-                        <td class="p-2 border border-black text-center">${lineTotal.toFixed(2)}</td>
+                        <td class="p-2 border border-black text-center font-bold">${lineTotal.toFixed(2)}</td>
                     </tr>
                 `;
             });
@@ -689,7 +697,7 @@
             const customerName = document.getElementById('sale-customer-name').value.trim() || 'عميل نقدي';
             const customerPhone = document.getElementById('sale-customer-phone').value.trim() || 'بدون رقم';
 
-            document.getElementById('modal-invoice-type').innerText = "فاتورة مبيعات";
+            document.getElementById('modal-invoice-type').innerText = "فاتورة بيع";
             document.getElementById('modal-client-info').innerHTML = `
                 <div>العميل: <span class="font-normal">${customerName}</span></div>
                 <div>الهاتف: <span class="font-normal">${customerPhone}</span></div>
@@ -704,11 +712,11 @@
                 cartTotal += lineTotal;
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-2 border border-black text-center">${index + 1}</td>
-                        <td class="p-2 border border-black text-center">${item.qty}</td>
+                        <td class="p-2 border border-black text-center font-bold">${index + 1}</td>
+                        <td class="p-2 border border-black text-center font-bold">${item.qty}</td>
                         <td class="p-2 border border-black font-bold">${item.name}</td>
                         <td class="p-2 border border-black text-center">${item.price.toFixed(2)}</td>
-                        <td class="p-2 border border-black text-center">${lineTotal.toFixed(2)}</td>
+                        <td class="p-2 border border-black text-center font-bold">${lineTotal.toFixed(2)}</td>
                     </tr>
                 `;
             });
@@ -741,7 +749,7 @@
                         <td class="p-3">${debt.phone}</td>
                         <td class="p-3 font-bold text-white">${debt.amount.toFixed(2)} ج.م</td>
                         <td class="p-3 text-center">
-                            <button onclick="payDebtPrompt(${debt.id})" class="px-3 py-1 bg-neutral-800 text-xs text-white rounded hover:bg-neutral-700">تسجيل دفعة</button>
+                            <button onclick="payDebtPrompt(${debt.id})" class="px-3 py-1 bg-neutral-800 text-xs text-white rounded hover:bg-neutral-700">سداد جزء</button>
                         </td>
                     </tr>
                 `;
@@ -752,7 +760,7 @@
             const debt = debts.find(d => d.id === debtId);
             if(!debt) return;
 
-            const paid = prompt(`تسديد جزء من دين العميل (${debt.name})\nالدين الحالي: ${debt.amount.toFixed(2)} ج.م\nأدخل المبلغ المدفوع:`);
+            const paid = prompt(`سداد جزء من دين العميل (${debt.name})\nالدين الحالي: ${debt.amount.toFixed(2)} ج.م\nأدخل المبلغ المدفوع:`);
             const paidAmount = parseFloat(paid);
 
             if(!isNaN(paidAmount) && paidAmount > 0) {
@@ -762,14 +770,14 @@
             }
         }
 
-        // --- Common Modal & Printing ---
+        // --- المعاينة والطباعة ---
         function closeModal() {
             document.getElementById('invoice-modal').classList.add('hidden');
         }
 
         function executePrint() {
             if(currentModalAction === 'sale') {
-                // خصم الكميات من المخزن
+                // خصم الكميات المتاحة من المخزن
                 saleCart.forEach(cartItem => {
                     const invItem = inventory.find(i => i.id === cartItem.itemId);
                     if(invItem) {
@@ -778,7 +786,7 @@
                 });
                 localStorage.setItem('bz_inventory', JSON.stringify(inventory));
 
-                // حفظ الدين
+                // تحديث وسجل ديون العملاء
                 const customerName = document.getElementById('sale-customer-name').value.trim();
                 const customerPhone = document.getElementById('sale-customer-phone').value.trim();
                 const remaining = parseFloat(document.getElementById('sale-remaining-balance').value) || 0;
@@ -800,7 +808,7 @@
                     localStorage.setItem('bz_debts', JSON.stringify(debts));
                 }
 
-                // تفريغ السلة
+                // تفريغ الفاتورة
                 saleCart = [];
                 document.getElementById('sale-customer-name').value = '';
                 document.getElementById('sale-customer-phone').value = '';
